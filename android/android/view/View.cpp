@@ -49,6 +49,22 @@ View::~View()
         m_private->releaseFocus();
 }
 
+Context& View::getContext()
+{
+    return m_context;
+}
+
+std::shared_ptr<IBinder> View::getWindowToken()
+{
+    return m_private->hostWindow()->window()->getWindowToken();
+}
+
+void View::getLocationOnScreen(int32_t outLocation[2])
+{
+    outLocation[0] = 0;
+    outLocation[1] = 0;
+}
+
 void View::setVisibility(int32_t visibility)
 {
     onVisibilityChanged(this, visibility);
@@ -82,16 +98,6 @@ void View::invalidate()
 
 void View::invalidate(Rect&)
 {
-}
-
-Context& View::getContext()
-{
-    return m_context;
-}
-
-std::shared_ptr<IBinder> View::getWindowToken()
-{
-    return m_private->hostWindow()->window()->getWindowToken();
 }
 
 std::shared_ptr<InputConnection> View::onCreateInputConnection(EditorInfo& outAttrs)

@@ -75,6 +75,8 @@ public:
     // Retrieve a unique token identifying the window this view is attached to.
     ANDROID_EXPORT std::shared_ptr<IBinder> getWindowToken();
 
+    // Computes the coordinates of this view on the screen. 
+    ANDROID_EXPORT virtual void getLocationOnScreen(int32_t outLocation[2]);
     // Return the width of the your view.
     ANDROID_EXPORT int32_t getWidth() { return m_rect.width(); }
     // Return the height of your view.
