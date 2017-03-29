@@ -38,6 +38,10 @@ int32_t Selection::getSelectionEnd(CharSequence& text)
     return -1;
 }
 
+void Selection::setSelection(Spannable& text, int32_t index)
+{
+}
+
 void Selection::setSelection(Spannable& text, int32_t start, int32_t stop)
 {
 }

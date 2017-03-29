@@ -47,6 +47,9 @@ public:
     ANDROID_EXPORT void updateCursorAnchorInfo(View& view, CursorAnchorInfo& cursorAnchorInfo);
     // Report the current selection range. 
     ANDROID_EXPORT void updateSelection(View& view, int32_t selStart, int32_t selEnd, int32_t candidatesStart, int32_t candidatesEnd);
+
+private:
+    bool mActive { false };
 };
 
 } // namespace inputmethod

@@ -60,6 +60,22 @@ static RECT windowClientRect(WindowHandle parentWindow, const Rect& clientRect)
     return defaultClientRect;
 }
 
+class BinderWindow final : public os::LocalBinderWin {
+public:
+    BinderWindow(HWND, HostWindow&);
+    ~BinderWindow() = default;
+
+    app::HostWindow* window() override { return &hostWindow; }
+
+    HostWindow& hostWindow;
+};
+
+BinderWindow::BinderWindow(HWND hwnd, HostWindow& window)
+    : os::LocalBinderWin(hwnd, nullptr)
+    , hostWindow(window)
+{
+}
+
 std::unique_ptr<WindowProvider> WindowProvider::create(WindowHandle parentWindow, const Rect& clientRect,
     HostWindow& host)
 {
@@ -79,7 +95,7 @@ WindowProviderWin::WindowProviderWin(WindowHandle parentWindow, const Rect& clie
     Create(reinterpret_cast<HWND>(parentWindow), ATL::_U_RECT(windowClientRect(parentWindow, clientRect)), _T("Android++"),
         parentWindow ? WS_CHILDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_OVERLAPPEDWINDOW);
 
-    m_windowToken = Binder::adapt(reinterpret_cast<intptr_t>(hwnd()));
+    m_windowToken = std::make_shared<BinderWindow>(hwnd(), host);
 
     loadIMM();
     enableInputMethod(false);
@@ -469,39 +485,61 @@ static int32_t metaStateForKeyEvent()
     return metaState;
 }
 
-static KeyEvent keyEvent(std::chrono::milliseconds downTime, KeyAction action, UINT keyCode, UINT repeatCount, UINT keyData, bool isSystemKey)
+static BOOL translateMessage(HWND hwnd, UINT message, UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-    uint32_t virtualKeyCode = (action == KeyAction::Press) ? 0 : keycodeWithLocation(keyCode, keyData);
+    MSG msg = { hwnd, message, (WPARAM)nChar, (LPARAM)(nRepCnt | nFlags << 16), ::GetTickCount(), };
+    return ::TranslateMessage(&msg);
+}
+
+static wchar_t getEventCharacter(HWND hwnd, UINT message, UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+    if (message != WM_KEYDOWN && message != WM_KEYUP)
+        return 0;
+
+    MSG translatedMessage;
+    if (!translateMessage(hwnd, message, nChar, nRepCnt, nFlags))
+        return 0;
+
+    if (!::PeekMessage(&translatedMessage, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE))
+        return 0;
+
+    return (wchar_t)translatedMessage.wParam;
+}
+
+static KeyEvent keyEvent(std::chrono::milliseconds downTime, KeyAction action, HWND hwnd, UINT message, UINT nChar, UINT nRepCnt, UINT nFlags, bool isSystemKey)
+{
+    uint32_t virtualKeyCode = (action == KeyAction::Press) ? 0 : keycodeWithLocation(nChar, nFlags);
     KeyEvent event(downTime, System::currentTimeMillis(),
-        (action == KeyAction::Up) ? KeyEvent::ACTION_UP : (repeatCount == 1) ? KeyEvent::ACTION_DOWN : KeyEvent::ACTION_MULTIPLE,
+        (action == KeyAction::Up) ? KeyEvent::ACTION_UP : (nRepCnt == 1) ? KeyEvent::ACTION_DOWN : KeyEvent::ACTION_MULTIPLE,
         view::VirtualKeyMap::toKeyEventKeyCode(virtualKeyCode),
-        repeatCount, metaStateForKeyEvent(), 0 /* deviceId */,
-        HIBYTE(HIWORD(keyData)), 0 /* flags */,
+        nRepCnt, metaStateForKeyEvent(), 0 /* deviceId */,
+        HIBYTE(HIWORD(nFlags)), 0 /* flags */,
         InputDevice::SOURCE_KEYBOARD);
     view::KeyEventPrivate::setNativeKeyCode(event, virtualKeyCode);
     view::KeyEventPrivate::setVirtualKeyCode(event, virtualKeyCode);
     view::KeyEventPrivate::setSystemKey(event, isSystemKey);
+    view::KeyEventPrivate::setMappedCharacter(event, getEventCharacter(hwnd, message, nChar, nRepCnt, nFlags));
     return event;
 }
 
 void WindowProviderWin::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-    m_host.dispatchKeyEvent(keyEvent(generateDownTime(nChar), KeyAction::Down, nChar, nRepCnt, nFlags, false));
+    m_host.dispatchKeyEvent(keyEvent(generateDownTime(nChar), KeyAction::Down, hwnd(), WM_KEYDOWN, nChar, nRepCnt, nFlags, false));
 }
 
 void WindowProviderWin::OnSysKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-    m_host.dispatchKeyEvent(keyEvent(generateDownTime(nChar), KeyAction::Down, nChar, nRepCnt, nFlags, true));
+    m_host.dispatchKeyEvent(keyEvent(generateDownTime(nChar), KeyAction::Down, hwnd(), WM_SYSKEYDOWN, nChar, nRepCnt, nFlags, true));
 }
 
 void WindowProviderWin::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-    m_host.dispatchKeyEvent(keyEvent(getDownTime(nChar), KeyAction::Up, nChar, nRepCnt, nFlags, false));
+    m_host.dispatchKeyEvent(keyEvent(getDownTime(nChar), KeyAction::Up, hwnd(), WM_KEYUP, nChar, nRepCnt, nFlags, false));
 }
 
 void WindowProviderWin::OnSysKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-    m_host.dispatchKeyEvent(keyEvent(getDownTime(nChar), KeyAction::Up, nChar, nRepCnt, nFlags, true));
+    m_host.dispatchKeyEvent(keyEvent(getDownTime(nChar), KeyAction::Up, hwnd(), WM_SYSKEYUP, nChar, nRepCnt, nFlags, true));
 }
 
 void WindowProviderWin::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -730,11 +768,9 @@ void WindowProviderWin::setCandidateWindow(HIMC hIMC)
     if (!inputConnection)
         return;
 
-    m_requestedCursorUpdates = true;
-    if (!inputConnection->requestCursorUpdates(InputConnection::CURSOR_UPDATE_IMMEDIATE))
+    m_requestedCursorUpdates = inputConnection->requestCursorUpdates(InputConnection::CURSOR_UPDATE_IMMEDIATE);
+    if (!m_requestedCursorUpdates)
         return;
-
-    assert(!m_requestedCursorUpdates);
 
     RectF editRect = m_cursorAnchorInfo.getCharacterBounds(m_cursorAnchorInfo.getSelectionStart());
     editRect.offsetTo(0, 0);

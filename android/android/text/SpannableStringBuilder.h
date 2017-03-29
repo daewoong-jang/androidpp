@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Daewoong Jang.
+ * Copyright (C) 2017 Daewoong Jang.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,50 +23,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "KeyEventPrivate.h"
+#pragma once
+
+#include <android/text/Editable.h>
 
 namespace android {
-namespace view {
+namespace text {
 
-int32_t KeyEventPrivate::getNativeKeyCode(KeyEvent& event)
-{
-    return event.m_nativeKeyCode;
-}
+class SpannableStringBuilder : public Editable {
+    NONCOPYABLE(SpannableStringBuilder);
+public:
+    // Create a new SpannableStringBuilder with empty contents 
+    ANDROID_EXPORT SpannableStringBuilder() = default;
+    // Create a new SpannableStringBuilder containing a copy of the specified text, including its spans if any. 
+    ANDROID_EXPORT SpannableStringBuilder(CharSequence& text);
+    ANDROID_EXPORT virtual ~SpannableStringBuilder() = default;
 
-void KeyEventPrivate::setNativeKeyCode(KeyEvent& event, int32_t code)
-{
-    event.m_nativeKeyCode = code;
-}
+    // Replaces the specified range (st¡¦en) of text in this Editable with a copy of the slice start¡¦end from source.
+    ANDROID_EXPORT virtual Editable& replace(int32_t st, int32_t en, CharSequence source, int32_t start, int32_t end) override;
+    // Convenience for replace(st, en, text, 0, text.length()) 
+    ANDROID_EXPORT virtual Editable& replace(int32_t st, int32_t en, CharSequence text) override;
 
-int32_t KeyEventPrivate::getVirtualKeyCode(KeyEvent& event)
-{
-    return event.m_virtualKeyCode;
-}
+protected:
+    ANDROID_EXPORT virtual CharSequence& characters() override;
 
-void KeyEventPrivate::setVirtualKeyCode(KeyEvent& event, int32_t code)
-{
-    event.m_virtualKeyCode = code;
-}
+private:
+    CharSequence mText;
+};
 
-bool KeyEventPrivate::isSystemKey(KeyEvent& event)
-{
-    return event.m_isSystemKey;
-}
-
-void KeyEventPrivate::setSystemKey(KeyEvent& event, bool value)
-{
-    event.m_isSystemKey = value;
-}
-
-wchar_t KeyEventPrivate::getMappedCharacter(KeyEvent& event)
-{
-    return event.m_character;
-}
-
-void KeyEventPrivate::setMappedCharacter(KeyEvent& event, wchar_t ch)
-{
-    event.m_character = ch;
-}
-
-} // namespace view
+} // namespace text
 } // namespace android
+
+using SpannableStringBuilder = android::text::SpannableStringBuilder;

@@ -41,7 +41,7 @@ public:
     ANDROID_EXPORT virtual ~BaseInputConnection() = default;
 
     // Return the target of edit operations. 
-    ANDROID_EXPORT virtual const std::shared_ptr<Editable>& getEditable();
+    ANDROID_EXPORT virtual std::passed_ptr<Editable> getEditable();
     // Commit text to the text box and set the new cursor position. 
     ANDROID_EXPORT virtual bool commitText(CharSequence& text, int32_t newCursorPosition) override;
     // Delete beforeLength characters of text before the current cursor position, and delete afterLength characters of text after the current cursor position, excluding the selection. 

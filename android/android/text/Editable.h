@@ -33,15 +33,24 @@ namespace text {
 class Editable : public Spannable {
     NONCOPYABLE(Editable);
 public:
+    class Factory {
+    public:
+        // Returns the standard Editable Factory.
+        static Factory& getInstance();
+        // Returns a new SpannedStringBuilder from the specified CharSequence. 
+        std::shared_ptr<Editable> newEditable(CharSequence& source);
+    };
+    friend class Factory;
+
     ANDROID_EXPORT Editable() = default;
     ANDROID_EXPORT virtual ~Editable() = default;
     ANDROID_EXPORT operator CharSequence&() { return characters(); }
     ANDROID_EXPORT CharSequence& operator*() { return characters(); }
 
     // Replaces the specified range (st¡¦en) of text in this Editable with a copy of the slice start¡¦end from source.
-    virtual Editable& replace(int32_t st, int32_t en, CharSequence source, int32_t start, int32_t end) = 0;
+    ANDROID_EXPORT virtual Editable& replace(int32_t st, int32_t en, CharSequence source, int32_t start, int32_t end) = 0;
     // Convenience for replace(st, en, text, 0, text.length()) 
-    virtual Editable& replace(int32_t st, int32_t en, CharSequence text) = 0;
+    ANDROID_EXPORT virtual Editable& replace(int32_t st, int32_t en, CharSequence text) = 0;
 
 protected:
     ANDROID_EXPORT virtual CharSequence& characters() = 0;

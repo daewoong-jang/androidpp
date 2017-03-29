@@ -28,6 +28,10 @@
 #include <android/os/IBinder.h>
 
 namespace android {
+namespace app {
+class HostWindow;
+}
+
 namespace os {
 
 class Binder : public IBinder {
@@ -44,11 +48,11 @@ public:
     };
 
     static std::shared_ptr<Binder> create(Client&);
-    static std::shared_ptr<Binder> adapt(intptr_t);
     static std::shared_ptr<Binder> adopt(intptr_t);
     virtual ~Binder() = default;
 
     virtual intptr_t handle() const = 0;
+    virtual app::HostWindow* window() = 0;
 
     virtual bool isLocal() const { return false; }
 

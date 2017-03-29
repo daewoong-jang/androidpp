@@ -62,8 +62,8 @@ public:
     void invalidate() override;
     void invalidate(Rect&) override;
 
-    bool startInputMethod(View*, bool);
-    void endInputMethod(View*);
+    bool startInputMethod(View*);
+    void endInputMethod();
     InputConnection* inputConnection() const override { return m_inputConnection.get(); }
 
     void requestFocus(View*);

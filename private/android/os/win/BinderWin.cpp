@@ -68,11 +68,6 @@ std::shared_ptr<Binder> Binder::create(Client& client)
     return std::shared_ptr<MessageBinderWin>(new MessageBinderWin(&client), [] (auto) {});
 }
 
-std::shared_ptr<Binder> Binder::adapt(intptr_t handle)
-{
-    return std::make_shared<LocalBinderWin>(reinterpret_cast<HWND>(handle), nullptr);
-}
-
 std::shared_ptr<Binder> Binder::adopt(intptr_t handle)
 {
     return std::make_shared<BinderWin>(reinterpret_cast<HWND>(handle), nullptr);

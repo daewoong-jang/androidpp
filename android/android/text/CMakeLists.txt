@@ -1,11 +1,14 @@
 set(TEXT_SOURCES
+    Editable.cpp
     Selection.cpp
+    SpannableStringBuilder.cpp
 )
 
 set(TEXT_HEADERS
     Editable.h
     Selection.h
     Spannable.h
+    SpannableStringBuilder.h
 )
 
 include_directories(

@@ -25,22 +25,36 @@
 
 #include "InputMethodManager.h"
 
+#include <android/app/ActivityHostWindow.h>
+#include <android/os/Binder.h>
+#include <android/view/ViewPrivate.h>
+
 namespace android {
 namespace view {
 namespace inputmethod {
 
 bool InputMethodManager::showSoftInput(View& view, int32_t flags)
 {
-    return false;
+    if (mActive)
+        return true;
+    mActive = ViewPrivate::getPrivate(view).hostWindow()->startInputMethod(&view);
 }
 
 bool InputMethodManager::hideSoftInputFromWindow(std::passed_ptr<IBinder> windowToken, int32_t flags)
 {
-    return false;
+    if (mActive) {
+        app::ActivityHostWindow* window = static_cast<app::ActivityHostWindow*>(std::static_pointer_cast<Binder>(windowToken)->window());
+        window->endInputMethod();
+    }
+    return true;
 }
 
 void InputMethodManager::restartInput(View& view)
 {
+    app::ActivityHostWindow* hostWindow = ViewPrivate::getPrivate(view).hostWindow();
+    if (mActive)
+        hostWindow->endInputMethod();
+    mActive = hostWindow->startInputMethod(&view);
 }
 
 void InputMethodManager::updateCursorAnchorInfo(View& view, CursorAnchorInfo& cursorAnchorInfo)

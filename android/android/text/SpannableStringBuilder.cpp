@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Daewoong Jang.
+ * Copyright (C) 2017 Daewoong Jang.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,50 +23,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "KeyEventPrivate.h"
+#include "SpannableStringBuilder.h"
 
 namespace android {
-namespace view {
+namespace text {
 
-int32_t KeyEventPrivate::getNativeKeyCode(KeyEvent& event)
+SpannableStringBuilder::SpannableStringBuilder(CharSequence& text)
+    : mText(text)
 {
-    return event.m_nativeKeyCode;
 }
 
-void KeyEventPrivate::setNativeKeyCode(KeyEvent& event, int32_t code)
+Editable& SpannableStringBuilder::replace(int32_t st, int32_t en, CharSequence source, int32_t start, int32_t end)
 {
-    event.m_nativeKeyCode = code;
+    return *this;
 }
 
-int32_t KeyEventPrivate::getVirtualKeyCode(KeyEvent& event)
+Editable& SpannableStringBuilder::replace(int32_t st, int32_t en, CharSequence text)
 {
-    return event.m_virtualKeyCode;
+    return *this;
 }
 
-void KeyEventPrivate::setVirtualKeyCode(KeyEvent& event, int32_t code)
+CharSequence& SpannableStringBuilder::characters()
 {
-    event.m_virtualKeyCode = code;
+    return mText;
 }
 
-bool KeyEventPrivate::isSystemKey(KeyEvent& event)
-{
-    return event.m_isSystemKey;
-}
-
-void KeyEventPrivate::setSystemKey(KeyEvent& event, bool value)
-{
-    event.m_isSystemKey = value;
-}
-
-wchar_t KeyEventPrivate::getMappedCharacter(KeyEvent& event)
-{
-    return event.m_character;
-}
-
-void KeyEventPrivate::setMappedCharacter(KeyEvent& event, wchar_t ch)
-{
-    event.m_character = ch;
-}
-
-} // namespace view
+} // namespace text
 } // namespace android

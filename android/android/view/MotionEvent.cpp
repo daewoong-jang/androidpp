@@ -168,7 +168,7 @@ String MotionEvent::actionToString(int32_t action)
     }
 }
 
-    // Symbolic names of all axes.
+// Symbolic names of all axes.
 static const LazyInitializedPtr<std::unordered_map<int32_t, String>> AXIS_SYMBOLIC_NAMES([] {
         auto& names = *new std::unordered_map<int32_t, String>();
         names[MotionEvent::AXIS_X] = L"AXIS_X";

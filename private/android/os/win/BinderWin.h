@@ -38,6 +38,7 @@ public:
     virtual ~BinderWin();
 
     intptr_t handle() const override { return reinterpret_cast<intptr_t>(m_hwnd); }
+    virtual app::HostWindow* window() override { return nullptr; }
 
     virtual bool transact(int32_t code, Parcel& data, int32_t flags) override;
 

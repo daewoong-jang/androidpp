@@ -25,6 +25,7 @@
 
 #include "BaseInputConnection.h"
 
+#include <android/text/Selection.h>
 #include <android/view/View.h>
 #include <android/view/inputmethod/InputConnectionPrivate.h>
 
@@ -36,8 +37,12 @@ BaseInputConnection::BaseInputConnection(View& targetView, bool fullEditor)
 {
 }
 
-const std::shared_ptr<Editable>& BaseInputConnection::getEditable()
+std::passed_ptr<Editable> BaseInputConnection::getEditable()
 {
+    if (mEditable == nullptr) {
+        mEditable = Editable::Factory::getInstance().newEditable(CharSequence(L""));
+        Selection::setSelection(*mEditable, 0);
+    }
     return mEditable;
 }
 
@@ -63,7 +68,7 @@ bool BaseInputConnection::finishComposingText()
 
 bool BaseInputConnection::requestCursorUpdates(int32_t cursorUpdateMode)
 {
-    return true;
+    return false;
 }
 
 bool BaseInputConnection::setComposingText(CharSequence& text, int32_t newCursorPosition)

@@ -359,16 +359,16 @@ void ActivityHostWindow::invalidate(Rect& rect)
     m_decorView->invalidate(rect);
 }
 
-bool ActivityHostWindow::startInputMethod(View* view, bool enable)
+bool ActivityHostWindow::startInputMethod(View* view)
 {
     assert(contentView());
 
     m_inputConnection = view->onCreateInputConnection(EditorInfo());
-    m_windowProvider->startInputMethod(enable);
+    m_windowProvider->startInputMethod(true);
     return true;
 }
 
-void ActivityHostWindow::endInputMethod(View*)
+void ActivityHostWindow::endInputMethod()
 {
     m_windowProvider->resetInputMethod();
     m_inputConnection.reset();

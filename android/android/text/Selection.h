@@ -39,6 +39,8 @@ public:
     ANDROID_EXPORT static int32_t getSelectionStart(CharSequence& text);
     // Return the offset of the selection edge or cursor, or -1 if there is no selection or cursor.
     ANDROID_EXPORT static int32_t getSelectionEnd(CharSequence& text);
+    // Move the cursor to offset index.
+    ANDROID_EXPORT static void setSelection(Spannable& text, int32_t index);
     // Set the selection anchor to start and the selection edge to stop. 
     ANDROID_EXPORT static void setSelection(Spannable& text, int32_t start, int32_t stop);
 };

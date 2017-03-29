@@ -32,12 +32,14 @@ namespace view {
 
 class KeyEventPrivate final {
 public:
-    static void getNativeKeyCode(KeyEvent& event, int32_t code);
+    static int32_t getNativeKeyCode(KeyEvent& event);
     static void setNativeKeyCode(KeyEvent& event, int32_t code);
-    static void getVirtualKeyCode(KeyEvent& event, int32_t code);
+    static int32_t getVirtualKeyCode(KeyEvent& event);
     static void setVirtualKeyCode(KeyEvent& event, int32_t code);
     static bool isSystemKey(KeyEvent& event);
     static void setSystemKey(KeyEvent& event, bool value);
+    static wchar_t getMappedCharacter(KeyEvent& event);
+    static void setMappedCharacter(KeyEvent& event, wchar_t ch);
 };
 
 } // namespace view
