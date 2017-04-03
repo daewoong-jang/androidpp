@@ -19,6 +19,7 @@ if (NOT ANDROID)
 
         list(APPEND ANDROID_LIB_DEPS
             ndk
+            log
             pthreadnp
             mfuuid
             ${WIN32_SYSTEM_LIBRARIES}

@@ -25,6 +25,8 @@
 
 #include "Log.h"
 
+#include <android/log.h>
+
 namespace android {
 namespace util {
 
@@ -38,7 +40,7 @@ int32_t Log::v(const char* tag, const char* msg)
     if (!isLoggable(tag, VERBOSE))
         return 0;
 
-    return Log::println(tag, msg);
+    return __android_log_write(ANDROID_LOG_VERBOSE, tag, msg);
 }
 
 int32_t Log::d(const char* tag, const char* msg)
@@ -46,7 +48,7 @@ int32_t Log::d(const char* tag, const char* msg)
     if (!isLoggable(tag, DEBUG))
         return 0;
 
-    return Log::println(tag, msg);
+    return __android_log_write(ANDROID_LOG_DEBUG, tag, msg);
 }
 
 int32_t Log::i(const char* tag, const char* msg)
@@ -54,7 +56,7 @@ int32_t Log::i(const char* tag, const char* msg)
     if (!isLoggable(tag, INFO))
         return 0;
 
-    return Log::println(tag, msg);
+    return __android_log_write(ANDROID_LOG_INFO, tag, msg);
 }
 
 int32_t Log::w(const char* tag, const char* msg)
@@ -62,7 +64,7 @@ int32_t Log::w(const char* tag, const char* msg)
     if (!isLoggable(tag, WARN))
         return 0;
 
-    return Log::println(tag, msg);
+    return __android_log_write(ANDROID_LOG_WARN, tag, msg);
 }
 
 int32_t Log::e(const char* tag, const char* msg)
@@ -70,7 +72,7 @@ int32_t Log::e(const char* tag, const char* msg)
     if (!isLoggable(tag, ERROR))
         return 0;
 
-    return Log::println(tag, msg);
+    return __android_log_write(ANDROID_LOG_ERROR, tag, msg);
 }
 
 void WTFCrash()
@@ -86,7 +88,7 @@ void WTFCrash()
 
 int32_t Log::wtf(const char* tag, const char* msg)
 {
-    int32_t result = Log::println(tag, msg);
+    int32_t result = __android_log_write(ANDROID_LOG_FATAL, tag, msg);
     WTFCrash();
     return result;
 }
