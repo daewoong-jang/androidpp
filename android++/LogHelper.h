@@ -41,6 +41,11 @@
 #define LOGE(format, ...)       LOG(LOG_PRIORITY_ERROR,   0, format, __VA_ARGS__)
 #define LOGA(format, ...)       LOG(LOG_PRIORITY_ASSERT,  0, format, __VA_ARGS__)
 
+#define LOGA_IF(condition, format, ...) \
+        if (!(condition)) { \
+            LOGA(format, __VA_ARGS__); \
+        }
+
 #define FMT_POINT               "(%d, %d)"
 #define ARG_POINT(pt)           (pt).x, (pt).y
 
@@ -48,7 +53,11 @@
 #define ARG_RECT(rc)            (rc).left, (rc).top, (rc).right, (rc).bottom
 
 #if defined(WIN32)
-#define CHECK_HRESULT(hr, ...)  if (FAILED(hr)) { LOGE("hr = %p, at %s(%d)", hr, __FILE__, __LINE__); return __VA_ARGS__; }
+#define CHECK_HRESULT(hr, ...) \
+        if (FAILED(hr)) { \
+            LOGE("hr = %p, at %s(%d)", hr, __FILE__, __LINE__); \
+            return __VA_ARGS__; \
+        }
 #endif
 
 #undef LOG
