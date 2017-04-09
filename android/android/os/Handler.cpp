@@ -151,7 +151,6 @@ Looper* Handler::getLooper()
 
 void Handler::handleMessage(Message& msg)
 {
-    assert(0);
 }
 
 bool Handler::hasMessages(int32_t what)
