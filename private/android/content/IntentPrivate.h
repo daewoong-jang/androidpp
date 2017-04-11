@@ -44,6 +44,8 @@ public:
     StringRef getModuleName();
     void setModuleName(StringRef);
     Bundle& getPrivateExtras();
+    void putArgumentExtras(int32_t argc, char** argv);
+    void putArgumentExtras(int32_t argc, wchar_t** argv);
 
 private:
     String m_moduleName;

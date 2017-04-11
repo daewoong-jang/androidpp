@@ -95,6 +95,10 @@ public:
     // Removes any entry with the given key from the mapping of this Bundle. 
     ANDROID_EXPORT virtual void remove(StringRef key);
 
+    // BaseBundle
+    // Returns true if the given key is contained in the mapping of this Bundle. 
+    ANDROID_EXPORT virtual bool containsKey(StringRef key);
+
     // Parcelable
     ANDROID_EXPORT static const LazyInitializedPtr<Parcelable::Creator> CREATOR;
 

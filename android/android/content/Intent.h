@@ -56,6 +56,10 @@ public:
     ANDROID_EXPORT virtual Intent& setClassName(Context& packageContext, StringRef className);
     // Convenience for calling setComponent(ComponentName) with an explicit application package name and class name. 
     ANDROID_EXPORT virtual Intent& setClassName(StringRef packageName, StringRef className);
+    // Retrieves a map of extended data from the intent. 
+    ANDROID_EXPORT virtual Bundle& getExtras();
+    // Returns true if an extra value is associated with the given name. 
+    ANDROID_EXPORT virtual bool hasExtra(StringRef name);
     // Retrieve extended data from the intent. 
     ANDROID_EXPORT virtual int32_t getIntExtra(StringRef name, int32_t defaultValue);
     // Add extended data to the intent. 

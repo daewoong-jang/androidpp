@@ -75,6 +75,7 @@ void BundlePrivate::putValue(StringRef key, BundleValue value)
         removeKey(key);
 
     m_values[key] = value;
+    m_keys.insert(key);
 }
 
 CharSequence BundlePrivate::getCharSequence(StringRef key)
@@ -91,6 +92,7 @@ void BundlePrivate::putCharSequence(StringRef key, const CharSequence& value)
         removeKey(key);
 
     m_charSequences[key] = std::make_unique<CharSequence>(value);
+    m_keys.insert(key);
 }
 
 std::shared_ptr<Parcelable> BundlePrivate::getParcelable(StringRef key)
@@ -107,6 +109,7 @@ void BundlePrivate::putParcelable(StringRef key, std::passed_ptr<Parcelable> val
         removeKey(key);
 
     m_parcelables[key] = value;
+    m_keys.insert(key);
 }
 
 void BundlePrivate::writeToParcel(Parcel& dest, int32_t flags)
@@ -170,6 +173,7 @@ void BundlePrivate::removeKey(StringRef key)
         m_charSequences.erase(key);
     else if (m_parcelables.count(key))
         m_parcelables.erase(key);
+    m_keys.erase(key);
 }
 
 } // namespace os

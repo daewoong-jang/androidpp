@@ -26,6 +26,7 @@
 #include "IntentPrivate.h"
 
 #include <android/content/ContextPrivate.h>
+#include <android++/StringConversion.h>
 
 namespace android {
 namespace content {
@@ -62,6 +63,24 @@ void IntentPrivate::setModuleName(StringRef moduleName)
 Bundle& IntentPrivate::getPrivateExtras()
 {
     return m_privateExtras;
+}
+
+void IntentPrivate::putArgumentExtras(int32_t argc, char** argv)
+{
+    if (argc == 0 || !argv)
+        return;
+
+    for (int32_t i = 0; i < argc; ++i)
+        m_extras.putCharSequence(String(L"arg") + std::to_wstring(i), std::s2ws(std::string(argv[i])));
+}
+
+void IntentPrivate::putArgumentExtras(int32_t argc, wchar_t** argv)
+{
+    if (argc == 0 || !argv)
+        return;
+
+    for (int32_t i = 0; i < argc; ++i)
+        m_extras.putCharSequence(String(L"arg") + std::to_wstring(i), String(argv[i]));
 }
 
 } // namespace content

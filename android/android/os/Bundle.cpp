@@ -191,6 +191,11 @@ void Bundle::remove(StringRef key)
     m_private->remove(key);
 }
 
+bool Bundle::containsKey(StringRef key)
+{
+    return m_private->findKey(key);
+}
+
 class BundleCreator final : public ParcelableCreator {
 public:
     std::shared_ptr<Parcelable> createFromParcel(Parcel& source) override

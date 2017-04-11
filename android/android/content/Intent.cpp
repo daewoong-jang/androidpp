@@ -104,6 +104,16 @@ Intent& Intent::setClassName(StringRef packageName, StringRef className)
     return *this;
 }
 
+Bundle& Intent::getExtras()
+{
+    return m_private->m_extras;
+}
+
+bool Intent::hasExtra(StringRef name)
+{
+    return m_private->m_extras.containsKey(name);
+}
+
 int32_t Intent::getIntExtra(StringRef name, int32_t defaultValue)
 {
     os::BundlePrivate& extras = os::BundlePrivate::getPrivate(m_private->m_extras);

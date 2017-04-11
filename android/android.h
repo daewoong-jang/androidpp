@@ -36,6 +36,8 @@ class ApplicationContext : public Context {
 public:
     ANDROID_EXPORT ApplicationContext();
     ANDROID_EXPORT ApplicationContext(String moduleName, String packageName);
+    ANDROID_EXPORT ApplicationContext(String moduleName, String packageName, int32_t argc, char** argv);
+    ANDROID_EXPORT ApplicationContext(String moduleName, String packageName, int32_t argc, wchar_t** argv);
     ANDROID_EXPORT virtual ~ApplicationContext();
 
     ANDROID_EXPORT virtual void setApplication(std::passed_ptr<Context> application);

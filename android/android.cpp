@@ -71,6 +71,26 @@ ApplicationContext::ApplicationContext(String moduleName, String packageName)
     content::ContextPrivate::getPrivate(*this).setAsApplicationContext();
 }
 
+ApplicationContext::ApplicationContext(String moduleName, String packageName, int32_t argc, char** argv)
+    : m_process(std::make_unique<Process>())
+    , m_moduleName(std::move(moduleName))
+    , m_packageName(std::move(packageName))
+{
+    content::ContextPrivate::setGlobalContext(*this);
+    content::ContextPrivate::getPrivate(*this).setAsApplicationContext();
+    content::IntentPrivate::getPrivate(m_intent).putArgumentExtras(argc, argv);
+}
+
+ApplicationContext::ApplicationContext(String moduleName, String packageName, int32_t argc, wchar_t** argv)
+    : m_process(std::make_unique<Process>())
+    , m_moduleName(std::move(moduleName))
+    , m_packageName(std::move(packageName))
+{
+    content::ContextPrivate::setGlobalContext(*this);
+    content::ContextPrivate::getPrivate(*this).setAsApplicationContext();
+    content::IntentPrivate::getPrivate(m_intent).putArgumentExtras(argc, argv);
+}
+
 ApplicationContext::~ApplicationContext()
 {
 }

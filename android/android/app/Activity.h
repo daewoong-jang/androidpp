@@ -26,6 +26,7 @@
 #pragma once
 
 #include <android/content/ContextThemeWrapper.h>
+#include <android/content/Intent.h>
 #include <android/content/res/Configuration.h>
 #include <android/os/Bundle.h>
 #include <android/view/ContextMenu.h>
@@ -46,6 +47,8 @@ public:
     ANDROID_EXPORT Activity(Window = nullptr);
     ANDROID_EXPORT virtual ~Activity();
 
+    // Return the intent that started this activity. 
+    ANDROID_EXPORT Intent& getIntent();
     // Retrieve the current Window for the activity. 
     ANDROID_EXPORT virtual Window getWindow();
 

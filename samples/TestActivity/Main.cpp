@@ -27,7 +27,7 @@
 
 int main(int argc, char* argv[])
 {
-    ApplicationContext context(L"TestActivity", L"com.example");
+    ApplicationContext context(L"TestActivity", L"com.example", argc, argv);
     context.setApplication(std::make_unique<com::example::TestActivity>());
     return context.runApplication();
 }

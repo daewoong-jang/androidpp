@@ -25,6 +25,7 @@
 
 #include "Activity.h"
 
+#include <android.h>
 #include <android/app/ActivityHostWindow.h>
 
 namespace android {
@@ -40,9 +41,15 @@ Activity::~Activity()
 {
 }
 
+Intent& Activity::getIntent()
+{
+    auto& context = static_cast<ApplicationContext&>(getApplicationContext());
+    return context.getIntent();
+}
+
 Window Activity::getWindow()
 {
-    return 0;
+    return reinterpret_cast<Window>(m_private->hostWindow()->window()->windowHandle());
 }
 
 void Activity::onAttachedToWindow()
