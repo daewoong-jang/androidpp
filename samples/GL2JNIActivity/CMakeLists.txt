@@ -24,8 +24,6 @@ include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${LIBRARY_PRODUCT_DIR}/include/android++"
     "${LIBRARY_PRODUCT_DIR}/include/android++/android"
-    "${ANGLE_LIBRARY_DIR}/include"
-    "${ANGLE_LIBRARY_DIR}"
 )
 
 add_library(GL2JNIActivity SHARED ${GL2JNI_ACTIVITY_SOURCES} ${GL2JNI_ACTIVITY_HEADERS})

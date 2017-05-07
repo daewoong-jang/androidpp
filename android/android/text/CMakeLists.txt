@@ -18,7 +18,6 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/private"
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_BINARY_DIR}"
-    "${LIBRARY_PRODUCT_DIR}/include"
 )
 
 add_library(android.text OBJECT ${TEXT_HEADERS} ${TEXT_SOURCES})

@@ -1,5 +1,5 @@
 if (NOT ANDROID)
-    set(ANDROID_SOURCES 
+    set(ANDROID_SOURCES
         ${CMAKE_SOURCE_DIR}/android/android.cpp
     )
 
@@ -33,9 +33,6 @@ if (NOT ANDROID)
         "${CMAKE_SOURCE_DIR}/private"
         "${CMAKE_CURRENT_BINARY_DIR}"
         "${CMAKE_BINARY_DIR}"
-        "${LIBRARY_PRODUCT_DIR}/include"
-        "${ANGLE_LIBRARY_DIR}/include"
-        "${ANGLE_LIBRARY_DIR}"
     )
 
     add_library(android++ SHARED

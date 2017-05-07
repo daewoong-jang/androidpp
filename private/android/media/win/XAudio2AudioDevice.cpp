@@ -27,7 +27,7 @@
 
 #include <android++/Assertions.h>
 #include <android++/LogHelper.h>
-#include <android++/win/SoftLinking.h>
+#include <win/SoftLinking.h>
 
 SOFT_LINK_LIBRARY(XAudio2_9);
 SOFT_LINK_OPTIONAL(XAudio2_9, XAudio2Create, HRESULT, __stdcall, (IXAudio2**, UINT32, XAUDIO2_PROCESSOR));

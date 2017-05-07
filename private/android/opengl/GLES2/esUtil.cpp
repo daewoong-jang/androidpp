@@ -26,6 +26,9 @@
 #include "esUtil.h"
 #include "esUtil_win.h"
 
+#if !defined(EGL_HARD_LINK)
+#define eglGetDisplay eglGetDisplayPtr()
+#endif
 
 
 ///

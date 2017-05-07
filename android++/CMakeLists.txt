@@ -20,7 +20,6 @@ set(ANDROIDPP_HEADERS
 if (WIN32)
     list(APPEND ANDROIDPP_HEADERS
         win/COMPtr.h
-        win/SoftLinking.h
     )
 endif ()
 
@@ -31,7 +30,6 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/private"
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_BINARY_DIR}"
-    "${LIBRARY_PRODUCT_DIR}/include"
 )
 
 add_library(android++.c++ OBJECT ${ANDROIDPP_HEADERS} ${ANDROIDPP_SOURCES})

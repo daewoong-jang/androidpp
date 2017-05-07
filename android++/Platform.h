@@ -36,3 +36,6 @@ using namespace std::chrono_literals;
 #include "ExportMacros.h"
 #include "Noncopyable.h"
 #include "ReferencePtr.h"
+
+#undef ERROR
+#undef ERROR_INVALID_OPERATION

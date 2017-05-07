@@ -29,7 +29,7 @@
 
 #include <android++/Assertions.h>
 #include <android++/LogHelper.h>
-#include <android++/win/SoftLinking.h>
+#include <win/SoftLinking.h>
 
 #include <algorithm>
 
