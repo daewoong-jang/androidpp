@@ -29,7 +29,6 @@
 #include "XAudio2AudioDevice.h"
 
 #include <atomic>
-#include <pthread.h>
 
 namespace android {
 namespace media {
@@ -71,7 +70,6 @@ private:
     bool m_paused;
     bool m_initializedWorkerThread;
     std::atomic<bool> m_deletionHasBegun;
-    pthread_main_np_t m_mainThreadIdentifier;
 };
 
 } // namespace graphics

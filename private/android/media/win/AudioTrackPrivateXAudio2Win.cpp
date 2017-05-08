@@ -84,7 +84,6 @@ AudioTrackPrivateXAudio2Win::AudioTrackPrivateXAudio2Win(AudioTrack& track)
     , m_paused(false)
     , m_deletionHasBegun(false)
     , m_initializedWorkerThread(false)
-    , m_mainThreadIdentifier(pthread_get_main_np())
 {
 }
 
@@ -261,7 +260,6 @@ void STDMETHODCALLTYPE AudioTrackPrivateXAudio2Win::OnBufferEnd(void* context)
         return;
 
     if (!m_initializedWorkerThread) {
-        pthread_init_current_np(m_mainThreadIdentifier);
         m_initializedWorkerThread = true;
     }
 

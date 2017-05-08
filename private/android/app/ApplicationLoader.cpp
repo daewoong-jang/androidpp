@@ -31,7 +31,6 @@
 #include <android/os/Looper.h>
 #include <android/os/ParcelablePrivate.h>
 #include <android++/LogHelper.h>
-#include <pthread.h>
 #include <thread>
 
 namespace android {

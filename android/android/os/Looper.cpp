@@ -25,8 +25,6 @@
 
 #include "Looper.h"
 
-#include <pthread.h>
-
 namespace android {
 namespace os {
 
@@ -39,7 +37,6 @@ Looper::~Looper()
 }
 
 static Looper* mainLooper;
-static pthread_main_np_t mainThreadIdentifier; // Thread.cpp
 
 // Returns the application's main looper, which lives in the main thread of the application.
 Looper* Looper::getMainLooper()
@@ -65,10 +62,8 @@ void Looper::prepareMainLooper()
         return;
 
     prepare();
-    pthread_init_main_np();
 
     mainLooper = threadLooper;
-    mainThreadIdentifier = pthread_get_main_np();
 
     platformLooperPrepareMain();
 }
