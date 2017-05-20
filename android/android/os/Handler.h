@@ -66,17 +66,17 @@ public:
     // Remove any pending posts of messages with code 'what' that are in the message queue.
     ANDROID_EXPORT void removeMessages(int32_t what);
 
-    // Causes the std::function<void ()> r to be added to the message queue.
-    ANDROID_EXPORT bool post(std::function<void ()> r);
-    // Posts a message to an object that implements std::function<void ()>.
-    ANDROID_EXPORT bool postAtFrontOfQueue(std::function<void ()> r);
-    // Causes the std::function<void ()> r to be added to the message queue, to be run at a specific time given by uptimeMillis.
-    ANDROID_EXPORT bool postAtTime(std::function<void ()> r, std::chrono::milliseconds uptimeMillis);
-    // Causes the std::function<void ()> r to be added to the message queue, to be run after the specified amount of time elapses.
-    ANDROID_EXPORT bool postDelayed(std::function<void ()> r, std::chrono::milliseconds delayMillis);
+    // Causes the std::function<void ()>&& r to be added to the message queue.
+    ANDROID_EXPORT bool post(std::function<void ()>&& r);
+    // Posts a message to an object that implements std::function<void ()>&&.
+    ANDROID_EXPORT bool postAtFrontOfQueue(std::function<void ()>&& r);
+    // Causes the std::function<void ()>&& r to be added to the message queue, to be run at a specific time given by uptimeMillis.
+    ANDROID_EXPORT bool postAtTime(std::function<void ()>&& r, std::chrono::milliseconds uptimeMillis);
+    // Causes the std::function<void ()>&& r to be added to the message queue, to be run after the specified amount of time elapses.
+    ANDROID_EXPORT bool postDelayed(std::function<void ()>&& r, std::chrono::milliseconds delayMillis);
 
-    // Remove any pending posts of std::function<void ()> r that are in the message queue.
-    ANDROID_EXPORT void removeCallbacks(std::function<void ()> r);
+    // Remove any pending posts of std::function<void ()>&& r that are in the message queue.
+    ANDROID_EXPORT void removeCallbacks(std::function<void ()>&& r);
 
     // Sends a Message containing only the what value.
     ANDROID_EXPORT bool sendEmptyMessage(int32_t what);

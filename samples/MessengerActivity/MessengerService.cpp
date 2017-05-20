@@ -29,6 +29,9 @@
 #include <android/os/Message.h>
 #include <android++/LogHelper.h>
 
+// Bound Services: Using a Messenger example
+// https://developer.android.com/guide/components/bound-services.html#Messenger
+
 namespace com {
 namespace example {
 

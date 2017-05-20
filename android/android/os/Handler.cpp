@@ -51,7 +51,7 @@ public:
     virtual void performWork() = 0;
 
     virtual bool isMessageOf(int32_t what) = 0;
-    virtual bool isMessageOf(std::function<void()> r) = 0;
+    virtual bool isMessageOf(std::function<void ()>& r) = 0;
 
     virtual std::chrono::milliseconds fireTime()
     {
@@ -84,7 +84,7 @@ public:
     {
         return what == m_message.what;
     }
-    bool isMessageOf(std::function<void ()> r)
+    bool isMessageOf(std::function<void ()>& r)
     {
         return false;
     }
@@ -95,9 +95,9 @@ private:
 
 class RunnableWorkItem : public WorkItem {
 public:
-    RunnableWorkItem(Handler& h, std::chrono::milliseconds fireTime, std::function<void()> r)
+    RunnableWorkItem(Handler& h, std::chrono::milliseconds fireTime, std::function<void ()>&& r)
         : WorkItem(h, fireTime)
-        , m_runnable(r)
+        , m_runnable(std::move(r))
     {
     }
     ~RunnableWorkItem()
@@ -114,7 +114,7 @@ public:
     {
         return false;
     }
-    bool isMessageOf(std::function<void ()> r)
+    bool isMessageOf(std::function<void ()>& r)
     {
         return m_runnable.target<void(*)()>() == r.target<void(*)()>();
     }
@@ -178,38 +178,38 @@ Message Handler::obtainMessage(int32_t what, int32_t arg1, int32_t arg2)
     return Message::obtain(this, what, arg1, arg2);
 }
 
-void Handler::removeCallbacks(std::function<void()> r)
+void Handler::removeCallbacks(std::function<void ()>&& r)
 {
-    removeWorkItems(r);
+    removeWorkItems(std::move(r));
 }
 
-bool Handler::post(std::function<void()> r)
+bool Handler::post(std::function<void ()>&& r)
 {
     synchronized (this) {
-        enqueueWorkItem(m_workQueue, std::make_unique<RunnableWorkItem>(*this, System::currentTimeMillis(), r));
+        enqueueWorkItem(m_workQueue, std::make_unique<RunnableWorkItem>(*this, System::currentTimeMillis(), std::move(r)));
         return start();
     }
 }
 
-bool Handler::postAtFrontOfQueue(std::function<void()> r)
+bool Handler::postAtFrontOfQueue(std::function<void ()>&& r)
 {
     synchronized (this) {
-        enqueueWorkItem(m_workQueue, std::make_unique<RunnableWorkItem>(*this, System::currentTimeMillis() - oneMillisecond, r));
+        enqueueWorkItem(m_workQueue, std::make_unique<RunnableWorkItem>(*this, System::currentTimeMillis() - oneMillisecond, std::move(r)));
         return start();
     }
 }
 
-bool Handler::postAtTime(std::function<void()> r, std::chrono::milliseconds uptimeMillis)
+bool Handler::postAtTime(std::function<void ()>&& r, std::chrono::milliseconds uptimeMillis)
 {
     synchronized (this) {
-        enqueueWorkItem(m_workQueue, std::make_unique<RunnableWorkItem>(*this, uptimeMillis, r));
+        enqueueWorkItem(m_workQueue, std::make_unique<RunnableWorkItem>(*this, uptimeMillis, std::move(r)));
         return startAtTime();
     }
 }
 
-bool Handler::postDelayed(std::function<void()> r, std::chrono::milliseconds delayMillis)
+bool Handler::postDelayed(std::function<void ()>&& r, std::chrono::milliseconds delayMillis)
 {
-    return postAtTime(r, System::currentTimeMillis() + delayMillis);
+    return postAtTime(std::move(r), System::currentTimeMillis() + delayMillis);
 }
 
 void Handler::removeMessages(int32_t what)

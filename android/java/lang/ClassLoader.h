@@ -25,6 +25,9 @@
 
 #pragma once
 
+#include <android++/ExportMacros.h>
+#include <android++/Noncopyable.h>
+#include <android++/PointerTypes.h>
 #include <java/lang/StringImport.h>
 #include <java/net.h>
 

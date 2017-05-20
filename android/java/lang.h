@@ -25,7 +25,17 @@
 
 #pragma once
 
-#include <android++/Platform.h>
+#include <stdint.h>
+#include <chrono>
+#include <string>
+
+using namespace std::chrono_literals;
+
+#include <android++/Assertions.h>
+#include <android++/IdentifierErasure.h>
+#include <android++/Noncopyable.h>
+#include <android++/PointerTypes.h>
+
 #include <java/lang/Object.h>
 
 #include <java/lang/CharSequence.h>

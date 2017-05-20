@@ -25,8 +25,6 @@
 
 #pragma once
 
-#include <android++/Platform.h>
-
 #include <condition_variable>
 #include <mutex>
 #include <thread>

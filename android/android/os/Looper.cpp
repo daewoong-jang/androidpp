@@ -38,7 +38,6 @@ Looper::~Looper()
 
 static Looper* mainLooper;
 
-// Returns the application's main looper, which lives in the main thread of the application.
 Looper* Looper::getMainLooper()
 {
     if (!mainLooper)
@@ -49,13 +48,11 @@ Looper* Looper::getMainLooper()
 
 static thread_local Looper* threadLooper;
 
-// Return the Looper object associated with the current thread.
 Looper* Looper::myLooper()
 {
     return threadLooper;
 }
 
-// Initialize the current thread as a looper, marking it as an application's main looper.
 void Looper::prepareMainLooper()
 {
     if (mainLooper)
@@ -68,7 +65,6 @@ void Looper::prepareMainLooper()
     platformLooperPrepareMain();
 }
 
-// Initialize the current thread as a looper.
 void Looper::prepare()
 {
     if (myLooper())
@@ -78,7 +74,6 @@ void Looper::prepare()
     threadLooper->m_tid = platformGetThreadId();
 }
 
-// Run the message queue in this thread.
 void Looper::loop()
 {
     assert(threadLooper);
@@ -88,13 +83,11 @@ void Looper::loop()
     delete threadLooper;
 }
 
-// Quits the looper.
 void Looper::quit()
 {
     platformLooperQuit(m_tid, 0);
 }
 
-// Quits the looper safely.
 void Looper::quitSafely()
 {
     platformLooperQuit(m_tid, 0);

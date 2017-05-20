@@ -8,11 +8,11 @@ set(ANDROIDPP_HEADERS
     CompilerMacros.h
     ExportMacros.h
     Functional.h
+    IdentifierErasure.h
     KeywordMacros.h
     LogHelper.h
     Noncopyable.h
-    Platform.h
-    ReferencePtr.h
+    PointerTypes.h
     StringConversion.h
     TemporaryChange.h
 )

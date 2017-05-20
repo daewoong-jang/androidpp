@@ -30,6 +30,9 @@
 #include <android/view/InputDevice.h>
 #include <android++/LogHelper.h>
 
+// Bound Services: Using a Messenger example
+// https://developer.android.com/guide/components/bound-services.html#Messenger
+
 namespace com {
 namespace example {
 
@@ -73,7 +76,8 @@ MessengerActivity::~MessengerActivity()
 
 void MessengerActivity::sayHello()
 {
-    if (!mBound) return;
+    if (!mBound)
+        return;
     // Create and send a message to the service, using a supported 'what' value
     Message msg = Message::obtain(nullptr, MessengerService::MSG_SAY_HELLO, 0, 0);
     mService->send(msg);

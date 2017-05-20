@@ -33,9 +33,4 @@
 #define eglGetDisplay eglGetDisplayPtr()
 #endif
 
-#if defined(WIN32)
-#undef ERROR
-#undef ERROR_INVALID_OPERATION
-#endif
-
-#include <android++/Platform.h>
+#include <java/lang.h>

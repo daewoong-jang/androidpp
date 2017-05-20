@@ -25,8 +25,7 @@
 
 #pragma once
 
-#include <android++/Platform.h>
-#include <java/lang/Object.h>
+#include <java/lang.h>
 
 namespace javax {
 namespace microedition {
