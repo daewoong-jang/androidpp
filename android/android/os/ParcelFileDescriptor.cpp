@@ -55,7 +55,7 @@ public:
     }
 };
 
-const LazyInitializedPtr<Parcelable::Creator> ParcelFileDescriptor::CREATOR([] { return new ParcelFileDescriptorCreator; });
+const std::lazy_ptr<Parcelable::Creator> ParcelFileDescriptor::CREATOR([] { return new ParcelFileDescriptorCreator; });
 
 ParcelFileDescriptor::ParcelFileDescriptor()
 {

@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include <android/LazyInitializedPtr.h>
 #include <android/content/ComponentName.h>
 #include <android/os/Bundle.h>
 
@@ -74,7 +73,7 @@ public:
     ANDROID_EXPORT virtual Intent& putExtra(StringRef name, std::passed_ptr<Parcelable> value);
 
     // Parcelable
-    ANDROID_EXPORT static const LazyInitializedPtr<Parcelable::Creator> CREATOR;
+    ANDROID_EXPORT static const std::lazy_ptr<Parcelable::Creator> CREATOR;
 
     ANDROID_EXPORT virtual int32_t describeContents() override;
     ANDROID_EXPORT virtual void writeToParcel(Parcel& dest, int32_t flags) override;

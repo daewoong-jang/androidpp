@@ -79,7 +79,7 @@ public:
     ANDROID_EXPORT Bundle* peekData();
 
     // Parcelable
-    ANDROID_EXPORT static const LazyInitializedPtr<Parcelable::Creator> CREATOR;
+    ANDROID_EXPORT static const std::lazy_ptr<Parcelable::Creator> CREATOR;
 
     ANDROID_EXPORT virtual int32_t describeContents() override;
     ANDROID_EXPORT virtual void writeToParcel(Parcel& dest, int32_t flags);

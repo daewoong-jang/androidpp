@@ -123,7 +123,7 @@ public:
     }
 };
 
-const LazyInitializedPtr<Parcelable::Creator> ComponentName::CREATOR([] { return new ComponentNameCreator; });
+const std::lazy_ptr<Parcelable::Creator> ComponentName::CREATOR([] { return new ComponentNameCreator; });
 
 int32_t ComponentName::describeContents()
 {

@@ -25,38 +25,62 @@
 
 #pragma once
 
-#include <android/os/Parcelable.h>
+#include <functional>
+#include <memory>
 
-namespace android {
-namespace os {
+namespace std {
 
-class ParcelFileDescriptor : public Parcelable {
-    NONCOPYABLE(ParcelFileDescriptor);
-    friend class ParcelFileDescriptorCreator;
+template<typename T> using passed_ptr = const shared_ptr<T>&;
+
+template<typename T> shared_ptr<T> ref_ptr(T* ptr) { return shared_ptr<T>(ptr, [] (T*) {}); }
+template<typename T> shared_ptr<T> ref_ptr(T& ptr) { return shared_ptr<T>(&ptr, [] (T*) {}); }
+
+template<typename T>
+class lazy_ptr {
 public:
-    ANDROID_EXPORT static const std::lazy_ptr<Parcelable::Creator> CREATOR;
+    template<typename F>
+    lazy_ptr(F&& ctor)
+        : m_ctor(std::move(ctor))
+    {
+    }
+    lazy_ptr(const lazy_ptr&) = delete;
+    lazy_ptr& operator=(const lazy_ptr&) = delete;
 
-    ANDROID_EXPORT ParcelFileDescriptor();
-    ANDROID_EXPORT virtual ~ParcelFileDescriptor();
+    operator bool() const
+    {
+        return !!m_ptr;
+    }
 
-    // Take ownership of a raw native fd in to a new ParcelFileDescriptor. 
-    ANDROID_EXPORT static std::shared_ptr<ParcelFileDescriptor> adoptFd(int32_t fd);
-    // Return the native fd int for this ParcelFileDescriptor and detach it from the object here.
-    ANDROID_EXPORT virtual int32_t detachFd();
+    template<typename U>
+    bool operator==(const U& other)
+    {
+        return m_ptr.get() == other.get();
+    }
+    template<typename U>
+    bool operator!=(const U& other)
+    {
+        return m_ptr.get() != other.get();
+    }
 
-    // Describe the kinds of special objects contained in this Parcelable instance's marshaled representation.
-    ANDROID_EXPORT virtual int32_t describeContents() override;
-    // Flatten this object in to a Parcel. If PARCELABLE_WRITE_RETURN_VALUE is set in flags, the file descriptor will be closed after a copy is written to the Parcel. 
-    ANDROID_EXPORT virtual void writeToParcel(Parcel& dest, int32_t flags) override;
+    T* operator->() const { return get(); }
+    T& operator*() const { return *get(); }
+
+    const std::shared_ptr<T>& ptr() { return m_ptr; }
+
+    T* get() const
+    {
+        if (!m_init) {
+            m_ptr.reset(m_ctor());
+            m_init = true;
+        }
+
+        return m_ptr.get();
+    }
 
 private:
-    int32_t m_fd { 0 };
-    intptr_t m_handle { 0 };
-    intptr_t m_sourcePid { 0 };
-    bool m_close { false };
+    mutable std::shared_ptr<T> m_ptr;
+    mutable bool m_init = false;
+    std::function<T* ()> m_ctor;
 };
 
-} // namespace os
-} // namespace android
-
-using ParcelFileDescriptor = android::os::ParcelFileDescriptor;
+}

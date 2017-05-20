@@ -25,7 +25,6 @@
 
 #include "MotionEvent.h"
 
-#include <android/LazyInitializedPtr.h>
 #include <android/view/MotionEventPrivate.h>
 #include <android++/LogHelper.h>
 
@@ -169,7 +168,7 @@ String MotionEvent::actionToString(int32_t action)
 }
 
 // Symbolic names of all axes.
-static const LazyInitializedPtr<std::unordered_map<int32_t, String>> AXIS_SYMBOLIC_NAMES([] {
+static const std::lazy_ptr<std::unordered_map<int32_t, String>> AXIS_SYMBOLIC_NAMES([] {
         auto& names = *new std::unordered_map<int32_t, String>();
         names[MotionEvent::AXIS_X] = L"AXIS_X";
         names[MotionEvent::AXIS_Y] = L"AXIS_Y";

@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include <android/LazyInitializedPtr.h>
 #include <android/content/Context.h>
 #include <android/os/Parcelable.h>
 
@@ -59,7 +58,7 @@ public:
     ANDROID_EXPORT String flattenToString();
 
     // Parcelable
-    ANDROID_EXPORT static const LazyInitializedPtr<Parcelable::Creator> CREATOR;
+    ANDROID_EXPORT static const std::lazy_ptr<Parcelable::Creator> CREATOR;
 
     ANDROID_EXPORT int32_t describeContents() override;
     ANDROID_EXPORT void writeToParcel(Parcel& dest, int32_t flags) override;

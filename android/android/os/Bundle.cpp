@@ -216,7 +216,7 @@ public:
     }
 };
 
-const LazyInitializedPtr<Parcelable::Creator> Bundle::CREATOR([] { return new BundleCreator; });
+const std::lazy_ptr<Parcelable::Creator> Bundle::CREATOR([] { return new BundleCreator; });
 
 int32_t Bundle::describeContents()
 {

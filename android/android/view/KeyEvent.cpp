@@ -25,7 +25,6 @@
 
 #include "KeyEvent.h"
 
-#include <android/LazyInitializedPtr.h>
 #include <android/view/KeyEventPrivate.h>
 #include <android++/LogHelper.h>
 
@@ -330,7 +329,7 @@ bool KeyEvent::isTracking()
 }
 
 // Symbolic names of all key codes.
-static const LazyInitializedPtr<std::unordered_map<int32_t, String>> KEYCODE_SYMBOLIC_NAMES([] {
+static const std::lazy_ptr<std::unordered_map<int32_t, String>> KEYCODE_SYMBOLIC_NAMES([] {
         auto& names = *new std::unordered_map<int32_t, String>();
         names[KeyEvent::KEYCODE_UNKNOWN] = L"KEYCODE_UNKNOWN";
         names[KeyEvent::KEYCODE_SOFT_LEFT] = L"KEYCODE_SOFT_LEFT";
@@ -579,7 +578,7 @@ String KeyEvent::keyCodeToString(int32_t keyCode)
 
 // Symbolic names of all metakeys in bit order from least significant to most significant.
 // Accordingly there are exactly 32 values in this table.
-static const LazyInitializedPtr<std::vector<std::string>> META_SYMBOLIC_NAMES([] {
+static const std::lazy_ptr<std::vector<std::string>> META_SYMBOLIC_NAMES([] {
     auto& names = *new std::vector<std::string>();
     names.push_back("META_SHIFT_ON");
     names.push_back("META_ALT_ON");

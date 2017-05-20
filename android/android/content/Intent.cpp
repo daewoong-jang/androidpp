@@ -184,7 +184,7 @@ public:
     }
 };
 
-const LazyInitializedPtr<Parcelable::Creator> Intent::CREATOR([] { return new IntentCreator; });
+const std::lazy_ptr<Parcelable::Creator> Intent::CREATOR([] { return new IntentCreator; });
 
 int32_t Intent::describeContents()
 {

@@ -229,7 +229,7 @@ public:
     }
 };
 
-const LazyInitializedPtr<Parcelable::Creator> Message::CREATOR([] { return new MessageCreator; });
+const std::lazy_ptr<Parcelable::Creator> Message::CREATOR([] { return new MessageCreator; });
 
 int32_t Message::describeContents()
 {
