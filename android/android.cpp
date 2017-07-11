@@ -50,7 +50,7 @@ ApplicationContext::Process::Process()
     : process(app::ApplicationProcess::current())
 {
     std::unordered_map<String, String> parameters;
-    if (!process.initializeProcess(parameters)) {
+    if (!process.initialize(0, parameters)) {
         LOGA("Process initialization failed");
     }
 }
@@ -99,7 +99,7 @@ void ApplicationContext::setApplication(std::passed_ptr<Context> application)
 {
     assert(content::ContextPrivate::getPrivate(*application).isActivity());
 
-    if (!m_process->process.initializeApplication(m_moduleName)) {
+    if (!m_process->process.load(m_moduleName)) {
         LOGA("Application initialization failed");
         return;
     }
@@ -113,7 +113,7 @@ void ApplicationContext::setApplication(Intent& intent, int32_t action, int32_t 
     m_packageName = intent.getComponent().getPackageName();
     m_intent = intent;
 
-    if (!m_process->process.initializeApplication(m_moduleName)) {
+    if (!m_process->process.load(m_moduleName)) {
         LOGA("Application initialization failed");
         return;
     }

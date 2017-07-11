@@ -23,7 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "BinderWin.h"
+#include "BinderProviderWin.h"
 
 #include <android/os/Messenger.h>
 #include <android/os/ParcelPrivate.h>
@@ -63,63 +63,13 @@ enum {
     endHighResTimerID = 1001,
 };
 
-std::shared_ptr<Binder> Binder::create(Client& client)
+std::unique_ptr<BinderProvider> BinderProvider::create(Client& client)
 {
-    return std::shared_ptr<MessageBinderWin>(new MessageBinderWin(&client), [] (auto) {});
+    return std::make_unique<BinderProviderWin>(client);
 }
 
-std::shared_ptr<Binder> Binder::adopt(intptr_t handle)
-{
-    return std::make_shared<BinderWin>(reinterpret_cast<HWND>(handle), nullptr);
-}
-
-BinderWin::BinderWin(HWND hwnd, Client* client)
-    : Binder(client)
-    , m_hwnd(hwnd)
-{
-}
-
-BinderWin::~BinderWin()
-{
-}
-
-bool BinderWin::transact(int32_t code, Parcel& data, int32_t flags)
-{
-    if (!IsWindow(m_hwnd)) {
-        LOGE("Wrong destination");
-        return false;
-    }
-
-    COPYDATASTRUCT copyData;
-    copyData.dwData = (ULONG_PTR)code;
-    copyData.cbData = data.dataSize();
-    copyData.lpData = (PVOID)data.data();
-    if (!::SendMessageA(m_hwnd, WM_COPYDATA, flags == IBinder::FLAG_ONEWAY ? NULL : (WPARAM)ParcelPrivate::getPrivate(data).getOrigin()->handle(), (LPARAM)&copyData)) {
-        DWORD lastError = ::GetLastError();
-        LOGE("Transaction failed with error code %d", lastError);
-        return false;
-    }
-    return true;
-}
-
-LocalBinderWin::LocalBinderWin(HWND hwnd, Client* client)
-    : BinderWin(hwnd, client)
-{
-}
-
-LocalBinderWin::~LocalBinderWin()
-{
-}
-
-bool LocalBinderWin::transact(int32_t code, Parcel& data, int32_t flags)
-{
-    LOGI("Transaction attempt on local binder %x", this);
-    m_client->onTransaction(code, data, m_reply, flags);
-    return true;
-}
-
-MessageBinderWin::MessageBinderWin(Client* client)
-    : LocalBinderWin(NULL, client)
+BinderProviderWin::BinderProviderWin(Client& client)
+    : BinderProvider(client)
     , m_activeTimerID(0)
     , m_shouldUseHighResolutionTimers(true)
     , m_timerQueue(::CreateTimerQueue())
@@ -134,17 +84,17 @@ MessageBinderWin::MessageBinderWin(Client* client)
         CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, HWND_MESSAGE, 0, 0, this);
 }
 
-MessageBinderWin::~MessageBinderWin()
+BinderProviderWin::~BinderProviderWin()
 {
 }
 
-void MessageBinderWin::registerMessageWindowClass()
+void BinderProviderWin::registerMessageWindowClass()
 {
     static std::once_flag onceFlag;
     std::call_once(onceFlag, [=]{
         WNDCLASS windowClass = { 0 };
-        windowClass.lpfnWndProc = MessageBinderWin::messageWindowProc;
-        windowClass.cbWndExtra = sizeof(MessageBinderWin*) * 2;
+        windowClass.lpfnWndProc = BinderProviderWin::messageWindowProc;
+        windowClass.cbWndExtra = sizeof(BinderProviderWin*) * 2;
         windowClass.lpszClassName = kMessageWindowClassName;
 
         timerFiredMessage = ::RegisterWindowMessage(L"HandlerTimerFired");
@@ -154,23 +104,23 @@ void MessageBinderWin::registerMessageWindowClass()
     });
 }
 
-#define GWLP_HANDLERPTR(n) ((n) * sizeof(MessageBinderWin*))
+#define GWLP_HANDLERPTR(n) ((n) * sizeof(BinderProviderWin*))
 
-LRESULT CALLBACK MessageBinderWin::messageWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK BinderProviderWin::messageWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if (MessageBinderWin* binder = static_cast<MessageBinderWin*>(reinterpret_cast<void*>(::GetWindowLongPtr(hWnd, GWLP_HANDLERPTR(0)))))
+    if (BinderProviderWin* binder = static_cast<BinderProviderWin*>(reinterpret_cast<void*>(::GetWindowLongPtr(hWnd, GWLP_HANDLERPTR(0)))))
         return messageWindowProcInternal(hWnd, message, wParam, lParam);
 
     if (message == WM_CREATE) {
         LPCREATESTRUCT createStruct = reinterpret_cast<LPCREATESTRUCT>(lParam);
-        MessageBinderWin* binder = static_cast<MessageBinderWin*>(createStruct->lpCreateParams);
+        BinderProviderWin* binder = static_cast<BinderProviderWin*>(createStruct->lpCreateParams);
         reinterpret_cast<void*>(::SetWindowLongPtr(hWnd, GWLP_HANDLERPTR(0), reinterpret_cast<LONG_PTR>(binder)));
-        binder->m_client->onCreate();
+        binder->m_client.onCreate();
         return 0;
     }
 
     if (message == WM_CLOSE) {
-        MessageBinderWin* binder = static_cast<MessageBinderWin*>(reinterpret_cast<void*>(::GetWindowLongPtr(hWnd, GWLP_HANDLERPTR(1))));
+        BinderProviderWin* binder = static_cast<BinderProviderWin*>(reinterpret_cast<void*>(::GetWindowLongPtr(hWnd, GWLP_HANDLERPTR(1))));
         ::SetWindowLongPtr(hWnd, GWLP_HANDLERPTR(1), 0);
         delete binder;
     }
@@ -178,22 +128,22 @@ LRESULT CALLBACK MessageBinderWin::messageWindowProc(HWND hWnd, UINT message, WP
     return ::DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-LRESULT MessageBinderWin::messageWindowProcInternal(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT BinderProviderWin::messageWindowProcInternal(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    MessageBinderWin* binder = static_cast<MessageBinderWin*>(reinterpret_cast<void*>(::GetWindowLongPtr(hWnd, GWLP_HANDLERPTR(0))));
+    BinderProviderWin* binder = static_cast<BinderProviderWin*>(reinterpret_cast<void*>(::GetWindowLongPtr(hWnd, GWLP_HANDLERPTR(0))));
     switch (message) {
     case WM_COPYDATA: {
         intptr_t replyTo = wParam;
         COPYDATASTRUCT* copyData = (COPYDATASTRUCT*)lParam;
         Parcel data;
         ParcelPrivate::initializeWithCopy(data, reinterpret_cast<int8_t*>(copyData->lpData), copyData->cbData);
-        binder->onTransaction(copyData->dwData, data, replyTo, replyTo ? 0 : IBinder::FLAG_ONEWAY);
+        binder->m_client.onTransaction(copyData->dwData, data, replyTo, replyTo ? 0 : IBinder::FLAG_ONEWAY);
         return TRUE;
     }
     case WM_TIMER:
         if (wParam == sharedTimerID) {
             ::KillTimer(hWnd, sharedTimerID);
-            binder->m_client->onTimer();
+            binder->m_client.onTimer();
         } else if (wParam == endHighResTimerID) {
             ::KillTimer(hWnd, endHighResTimerID);
             binder->m_highResTimerActive = false;
@@ -204,7 +154,7 @@ LRESULT MessageBinderWin::messageWindowProcInternal(HWND hWnd, UINT message, WPA
         if (message == timerFiredMessage) {
             ::InterlockedExchange(&binder->m_pendingTimers, 0);
             binder->m_processingCustomTimerMessage = true;
-            binder->m_client->onTimer();
+            binder->m_client.onTimer();
             binder->m_processingCustomTimerMessage = false;
             return 0;
         }
@@ -214,20 +164,25 @@ LRESULT MessageBinderWin::messageWindowProcInternal(HWND hWnd, UINT message, WPA
     return ::DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void NTAPI MessageBinderWin::messageWindowQueueTimerCallback(PVOID parameter, BOOLEAN)
+void NTAPI BinderProviderWin::messageWindowQueueTimerCallback(PVOID parameter, BOOLEAN)
 {
-    MessageBinderWin* binder = static_cast<MessageBinderWin*>(parameter);
+    BinderProviderWin* binder = static_cast<BinderProviderWin*>(parameter);
     binder->start();
 }
 
-bool MessageBinderWin::start()
+intptr_t BinderProviderWin::handle() const
+{
+    return reinterpret_cast<intptr_t>(m_hwnd);
+}
+
+bool BinderProviderWin::start()
 {
     if (::InterlockedIncrement(&m_pendingTimers) == 1)
         ::PostMessage(m_hwnd, timerFiredMessage, 0, 0);
     return true;
 }
 
-bool MessageBinderWin::startAtTime(std::chrono::milliseconds uptimeMillis)
+bool BinderProviderWin::startAtTime(std::chrono::milliseconds uptimeMillis)
 {
     std::chrono::milliseconds delayMillis = uptimeMillis - System::currentTimeMillis();
 
@@ -289,7 +244,7 @@ bool MessageBinderWin::startAtTime(std::chrono::milliseconds uptimeMillis)
     return true;
 }
 
-void MessageBinderWin::stop()
+void BinderProviderWin::stop()
 {
     if (m_timerQueue && m_timerQueueTimer) {
         ::DeleteTimerQueueTimer(m_timerQueue, m_timerQueueTimer, 0);
@@ -302,12 +257,37 @@ void MessageBinderWin::stop()
     }
 }
 
-void MessageBinderWin::close()
+void BinderProviderWin::close()
 {
-    m_client->onDestroy();
+    m_client.onDestroy();
     ::SetWindowLongPtr(m_hwnd, GWLP_HANDLERPTR(0), 0);
     ::SetWindowLongPtr(m_hwnd, GWLP_HANDLERPTR(1), reinterpret_cast<LONG_PTR>(this));
     ::PostMessageA(m_hwnd, WM_CLOSE, 0, 0);
+}
+
+bool BinderProviderWin::transact(Binder* destination, int32_t code, Parcel& data, int32_t flags)
+{
+    if (!IsWindow(m_hwnd)) {
+        LOGE("Wrong source");
+        return false;
+    }
+
+    HWND destWnd = reinterpret_cast<HWND>(destination->handle());
+    if (!IsWindow(destWnd)) {
+        LOGE("Wrong destination");
+        return false;
+    }
+
+    COPYDATASTRUCT copyData;
+    copyData.dwData = (ULONG_PTR)code;
+    copyData.cbData = data.dataSize();
+    copyData.lpData = (PVOID)data.data();
+    if (!::SendMessageA(destWnd, WM_COPYDATA, flags == IBinder::FLAG_ONEWAY ? NULL : (WPARAM)m_hwnd, (LPARAM)&copyData)) {
+        DWORD lastError = ::GetLastError();
+        LOGE("Transaction failed with error code %d", lastError);
+        return false;
+    }
+    return true;
 }
 
 } // namespace os

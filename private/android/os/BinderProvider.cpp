@@ -23,61 +23,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
-#include <android/os/IBinder.h>
+#include "BinderProvider.h"
 
 namespace android {
-namespace app {
-class HostWindow;
-}
-
 namespace os {
 
-class BinderProvider;
-class BinderProxy;
-
-class Binder : public IBinder {
-    friend class BinderProvider;
-    friend class BinderProxy;
-public:
-    static const int32_t REPLY_TRANSACTION = LAST_CALL_TRANSACTION + 0x10000000;
-
-    class Client {
-    public:
-        virtual void onCreate() = 0;
-        virtual void onDestroy() = 0;
-        virtual void onTimer() = 0;
-        virtual void onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) = 0;
-    };
-
-    static std::shared_ptr<Binder> create(Client&);
-    static std::shared_ptr<Binder> adopt(intptr_t);
-    virtual ~Binder() = default;
-
-    virtual intptr_t handle() const = 0;
-    virtual app::HostWindow* window() = 0;
-
-    virtual bool isLocal() const { return false; }
-
-    virtual bool start() { return false; }
-    virtual bool startAtTime(std::chrono::milliseconds) { return false; }
-    virtual void stop() { }
-
-    virtual void close() { }
-
-    // IBinder
-    bool transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
-
-protected:
-    Binder(Client*);
-
-    virtual bool transact(Binder* destination, int32_t code, Parcel& data, Parcel* reply, int32_t flags);
-
-    Client* m_client { nullptr };
-};
+BinderProvider::BinderProvider(Client& client)
+    : m_client(client)
+{
+}
 
 } // namespace os
 } // namespace android
-
-using Binder = android::os::Binder;

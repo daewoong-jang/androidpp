@@ -25,59 +25,39 @@
 
 #pragma once
 
-#include <android/os/IBinder.h>
+#include <android/os/Binder.h>
 
 namespace android {
-namespace app {
-class HostWindow;
-}
-
 namespace os {
 
-class BinderProvider;
-class BinderProxy;
-
-class Binder : public IBinder {
-    friend class BinderProvider;
-    friend class BinderProxy;
+class BinderProvider {
 public:
-    static const int32_t REPLY_TRANSACTION = LAST_CALL_TRANSACTION + 0x10000000;
-
     class Client {
     public:
         virtual void onCreate() = 0;
         virtual void onDestroy() = 0;
         virtual void onTimer() = 0;
-        virtual void onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) = 0;
+        virtual void onTransaction(int32_t code, Parcel& data, intptr_t replyTo, int32_t flags) = 0;
     };
 
-    static std::shared_ptr<Binder> create(Client&);
-    static std::shared_ptr<Binder> adopt(intptr_t);
-    virtual ~Binder() = default;
+    static std::unique_ptr<BinderProvider> create(Client&);
+    virtual ~BinderProvider() = default;
 
     virtual intptr_t handle() const = 0;
-    virtual app::HostWindow* window() = 0;
 
-    virtual bool isLocal() const { return false; }
+    virtual bool start() = 0;
+    virtual bool startAtTime(std::chrono::milliseconds) = 0;
+    virtual void stop() = 0;
 
-    virtual bool start() { return false; }
-    virtual bool startAtTime(std::chrono::milliseconds) { return false; }
-    virtual void stop() { }
+    virtual void close() = 0;
 
-    virtual void close() { }
-
-    // IBinder
-    bool transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
+    virtual bool transact(Binder* destination, int32_t code, Parcel& data, int32_t flags) = 0;
 
 protected:
-    Binder(Client*);
+    BinderProvider(Client&);
 
-    virtual bool transact(Binder* destination, int32_t code, Parcel& data, Parcel* reply, int32_t flags);
-
-    Client* m_client { nullptr };
+    Client& m_client;
 };
 
 } // namespace os
 } // namespace android
-
-using Binder = android::os::Binder;

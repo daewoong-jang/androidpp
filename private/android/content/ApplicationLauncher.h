@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <android/os/Binder.h>
+#include <android/app/MessageClientBase.h>
 #include <android/os/Parcel.h>
 
 #include <unordered_map>
@@ -37,18 +37,18 @@ class ContextWrapper;
 class Intent;
 class ServiceConnection;
 
-class ApplicationLauncher final : public Binder::Client {
+class ApplicationLauncher final : public MessageClientBase<ApplicationLauncher> {
     class Application;
     friend class Application;
     friend class ContextWrapper;
 public:
-    ~ApplicationLauncher() = default;
+    ~ApplicationLauncher();
 
-    static const int32_t NO_ACTION = 0x00000001;
-    static const int32_t ACK_APPLICATION_LOADER = 0x00000002;
-    static const int32_t APPLICATION_INITIALIZED = 0x00000003;
-    static const int32_t APPLICATION_STARTED = 0x00000004;
-    static const int32_t SERVICE_ON_BIND = 0x00000005;
+    static const int32_t NO_ACTION = E(0);
+    static const int32_t ACK_APPLICATION_LOADER = E(1);
+    static const int32_t APPLICATION_INITIALIZED = E(2);
+    static const int32_t APPLICATION_STARTED = E(3);
+    static const int32_t SERVICE_ON_BIND = E(4);
 
     static ApplicationLauncher& get();
 
@@ -60,13 +60,14 @@ private:
 
     intptr_t platformCreateProcess(StringRef component);
 
-    // Binder::Client
-    void onCreate() override;
-    void onDestroy() override;
-    void onTimer() override;
-    void onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
+    using ResponseHeaderData = std::pair<Application*, std::pair<intptr_t, int64_t>>;
+    ResponseHeaderData readResponseHeader(Parcel& parcel);
 
-    std::shared_ptr<Binder> m_self;
+    // ApplicationProcess::MessageClient
+    void onTimer() override;
+    bool onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
+
+    ApplicationProcess& m_process;
     std::unordered_map<String, std::unique_ptr<Application>> m_applications;
 };
 

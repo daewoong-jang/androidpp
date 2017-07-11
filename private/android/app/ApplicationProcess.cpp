@@ -25,6 +25,8 @@
 
 #include "ApplicationProcess.h"
 
+#include <android/view/SurfacePrivate.h>
+
 namespace android {
 namespace app {
 
@@ -35,9 +37,10 @@ ApplicationProcess& ApplicationProcess::current()
 }
 
 ApplicationProcess::ApplicationProcess()
-    : m_mainThreadHandler(std::make_shared<Handler>())
+    : m_self(Binder::create(*this))
+    , m_mainThreadHandler(std::make_shared<Handler>())
 {
-    platformInitialize();
+    platformCreate();
 }
 
 ApplicationProcess::~ApplicationProcess()
@@ -45,14 +48,88 @@ ApplicationProcess::~ApplicationProcess()
     platformDestroy();
 }
 
-bool ApplicationProcess::post(std::function<void ()> r)
+bool ApplicationProcess::isRoot()
+{
+    return m_root == m_self;
+}
+
+std::passed_ptr<Binder> ApplicationProcess::self()
+{
+    return m_self;
+}
+
+std::passed_ptr<Binder> ApplicationProcess::root()
+{
+    return m_root;
+}
+
+bool ApplicationProcess::initialize(intptr_t root, std::unordered_map<String, String>& parameters)
+{
+    if (m_root)
+        return true;
+
+    m_root = root ? Binder::adopt(root) : m_self;
+
+    view::SurfacePrivate::initService();
+
+    return platformInitialize(parameters);
+}
+
+intptr_t ApplicationProcess::handle()
+{
+    return m_self->handle();
+}
+
+bool ApplicationProcess::setTimeout()
+{
+    return m_self->start();
+}
+
+bool ApplicationProcess::setTimeout(std::chrono::milliseconds time)
+{
+    return m_self->startAtTime(time);
+}
+
+bool ApplicationProcess::post(std::function<void ()>&& r)
 {
     return m_mainThreadHandler->post(std::move(r));
 }
 
-bool ApplicationProcess::postDelayed(std::function<void ()> r, std::chrono::milliseconds delayMillis)
+bool ApplicationProcess::postDelayed(std::function<void ()>&& r, std::chrono::milliseconds delayMillis)
 {
     return m_mainThreadHandler->postDelayed(std::move(r), delayMillis);
+}
+
+void ApplicationProcess::appendMessageClient(MessageClient* client)
+{
+    m_messageClients.push_back(client);
+}
+
+void ApplicationProcess::removeMessageClient(MessageClient* client)
+{
+    m_messageClients.erase(std::find(m_messageClients.begin(), m_messageClients.end(), client));
+}
+
+void ApplicationProcess::onCreate()
+{
+}
+
+void ApplicationProcess::onDestroy()
+{
+}
+
+void ApplicationProcess::onTimer()
+{
+    for (auto messageClient : m_messageClients)
+        messageClient->onTimer();
+}
+
+void ApplicationProcess::onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+{
+    for (auto messageClient : m_messageClients) {
+        if (messageClient->onTransaction(code, data, reply, flags))
+            return;
+    }
 }
 
 } // namespace app

@@ -95,7 +95,7 @@ static inline String toCommandLine(std::array<String, 3>&& options)
         result.append(L"\" ");
     }
 
-    return std::move(result);
+    return result;
 }
 
 intptr_t ApplicationLauncher::platformCreateProcess(StringRef component)
@@ -115,7 +115,7 @@ intptr_t ApplicationLauncher::platformCreateProcess(StringRef component)
 
     String commandLine = toCommandLine({
         System::getSystemPath() + L"\\" + processExecutableName(),
-        std::to_wstring(m_self->handle()),
+        std::to_wstring(m_process.handle()),
         component
     });
 

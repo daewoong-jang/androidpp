@@ -25,6 +25,8 @@
 
 #include "Binder.h"
 
+#include "BinderProvider.h"
+#include <android/app/ApplicationProcess.h>
 #include <android/os/ParcelPrivate.h>
 #include <android++/LogHelper.h>
 #include <android++/TemporaryChange.h>
@@ -32,27 +34,129 @@
 namespace android {
 namespace os {
 
-class EmptyBinderClient final : public Binder::Client {
+class BinderProxy : public Binder {
 public:
-    void onCreate() override { }
-    void onDestroy() override { }
-    void onTimer() override { }
-    void onTransaction(int32_t, Parcel&, Parcel*, int32_t) override { }
+    BinderProxy(intptr_t, Client*);
+    virtual ~BinderProxy();
+
+    intptr_t handle() const override { return m_handle; }
+    app::HostWindow* window() override { return nullptr; }
+
+    virtual bool transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
+
+protected:
+    intptr_t m_handle;
 };
 
-Binder::Binder(Client* client)
+BinderProxy::BinderProxy(intptr_t handle, Client* client)
+    : Binder(client)
+    , m_handle(handle)
 {
-    static EmptyBinderClient emptyClient;
-    m_client = client ? client : &emptyClient;
 }
 
-bool Binder::transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+BinderProxy::~BinderProxy()
+{
+}
+
+bool BinderProxy::transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+{
+    return ApplicationProcess::current().self()->transact(this, code, data, reply, flags);
+}
+
+class LocalBinder final : public BinderProxy, public BinderProvider::Client {
+public:
+    LocalBinder(Binder::Client*);
+    ~LocalBinder();
+
+    bool isLocal() const override;
+
+    bool start() override;
+    bool startAtTime(std::chrono::milliseconds) override;
+    void stop() override;
+
+    void close() override;
+
+    bool transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
+
+private:
+    // Binder
+    bool transact(Binder* destination, int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
+
+    // BinderProvider::Client
+    void onCreate() override;
+    void onDestroy() override;
+    void onTimer() override;
+    void onTransaction(int32_t code, Parcel& data, intptr_t replyTo, int32_t flags) override;
+
+    std::unique_ptr<BinderProvider> m_provider;
+    Parcel* m_reply { nullptr };
+};
+
+LocalBinder::LocalBinder(Binder::Client* client)
+    : BinderProxy(0, client)
+    , m_provider(BinderProvider::create(*this))
+{
+    m_handle = m_provider->handle();
+}
+
+LocalBinder::~LocalBinder()
+{
+}
+
+bool LocalBinder::isLocal() const
+{
+    return true;
+}
+
+bool LocalBinder::start()
+{
+    return m_provider->start();
+}
+
+bool LocalBinder::startAtTime(std::chrono::milliseconds uptimeMillis)
+{
+    return m_provider->startAtTime(uptimeMillis);
+}
+
+void LocalBinder::stop()
+{
+    m_provider->stop();
+}
+
+void LocalBinder::close()
+{
+    m_provider->close();
+}
+
+bool LocalBinder::transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+{
+    LOGV("Transaction attempt on local binder %x", this);
+    m_client->onTransaction(code, data, reply, flags);
+    return true;
+}
+
+bool LocalBinder::transact(Binder* destination, int32_t code, Parcel& data, Parcel* reply, int32_t flags)
 {
     TemporaryChange<Parcel*> replyChange(m_reply, reply);
-    return transact(code, data, flags);
+    return m_provider->transact(destination, code, data, flags);
 }
 
-void Binder::onTransaction(int32_t code, Parcel& data, intptr_t replyTo, int32_t flags)
+void LocalBinder::onCreate()
+{
+    m_client->onCreate();
+}
+
+void LocalBinder::onDestroy()
+{
+    m_client->onDestroy();
+}
+
+void LocalBinder::onTimer()
+{
+    m_client->onTimer();
+}
+
+void LocalBinder::onTransaction(int32_t code, Parcel& data, intptr_t replyTo, int32_t flags)
 {
     if (replyTo) {
         Parcel reply;
@@ -70,6 +174,42 @@ void Binder::onTransaction(int32_t code, Parcel& data, intptr_t replyTo, int32_t
             m_client->onTransaction(code, data, nullptr, IBinder::FLAG_ONEWAY);
         }
     }
+}
+
+class EmptyBinderClient final : public Binder::Client {
+public:
+    void onCreate() override { }
+    void onDestroy() override { }
+    void onTimer() override { }
+    void onTransaction(int32_t, Parcel&, Parcel*, int32_t) override { }
+};
+
+std::shared_ptr<Binder> Binder::create(Client& client)
+{
+    return std::make_shared<LocalBinder>(&client);
+}
+
+std::shared_ptr<Binder> Binder::adopt(intptr_t handle)
+{
+    return std::make_shared<BinderProxy>(handle, nullptr);
+}
+
+Binder::Binder(Client* client)
+{
+    static EmptyBinderClient emptyClient;
+    m_client = client ? client : &emptyClient;
+}
+
+bool Binder::transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+{
+    assert(false);
+    return false;
+}
+
+bool Binder::transact(Binder* destination, int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+{
+    assert(false);
+    return false;
 }
 
 } // namespace os

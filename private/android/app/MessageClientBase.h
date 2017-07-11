@@ -25,59 +25,48 @@
 
 #pragma once
 
-#include <android/os/IBinder.h>
+#include <android/app/ApplicationProcess.h>
 
 namespace android {
+
 namespace app {
-class HostWindow;
+class ApplicationLoader;
+}
+namespace content {
+class ApplicationLauncher;
+}
+namespace os {
+class MemoryFilePrivate;
+}
+namespace view {
+class SurfacePrivate;
 }
 
-namespace os {
+namespace app {
 
-class BinderProvider;
-class BinderProxy;
+template<typename T>
+struct MessageClientMessages;
 
-class Binder : public IBinder {
-    friend class BinderProvider;
-    friend class BinderProxy;
-public:
-    static const int32_t REPLY_TRANSACTION = LAST_CALL_TRANSACTION + 0x10000000;
+#define MESSAGE_CLIENT_MESSAGES(type, base) \
+    template<> struct MessageClientMessages<type> { \
+        static const int32_t FirstMessage = base; \
+    }
 
-    class Client {
-    public:
-        virtual void onCreate() = 0;
-        virtual void onDestroy() = 0;
-        virtual void onTimer() = 0;
-        virtual void onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) = 0;
-    };
-
-    static std::shared_ptr<Binder> create(Client&);
-    static std::shared_ptr<Binder> adopt(intptr_t);
-    virtual ~Binder() = default;
-
-    virtual intptr_t handle() const = 0;
-    virtual app::HostWindow* window() = 0;
-
-    virtual bool isLocal() const { return false; }
-
-    virtual bool start() { return false; }
-    virtual bool startAtTime(std::chrono::milliseconds) { return false; }
-    virtual void stop() { }
-
-    virtual void close() { }
-
-    // IBinder
-    bool transact(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
-
+template<typename T>
+class MessageClientBase : public ApplicationProcess::MessageClient {
 protected:
-    Binder(Client*);
-
-    virtual bool transact(Binder* destination, int32_t code, Parcel& data, Parcel* reply, int32_t flags);
-
-    Client* m_client { nullptr };
+    constexpr static int32_t E(int32_t i)
+    {
+        return MessageClientMessages<T>::FirstMessage + i;
+    }
 };
 
-} // namespace os
+MESSAGE_CLIENT_MESSAGES(ApplicationLoader, 100000);
+MESSAGE_CLIENT_MESSAGES(content::ApplicationLauncher, 101000);
+MESSAGE_CLIENT_MESSAGES(os::MemoryFilePrivate, 102000);
+MESSAGE_CLIENT_MESSAGES(view::SurfacePrivate, 103000);
+
+} // namespace app
 } // namespace android
 
-using Binder = android::os::Binder;
+template<typename T> using MessageClientBase = android::app::MessageClientBase<T>;

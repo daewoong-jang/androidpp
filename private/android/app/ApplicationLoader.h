@@ -26,28 +26,25 @@
 #pragma once
 
 #include <android.h>
-#include <android/app/ApplicationProcess.h>
+#include <android/app/MessageClientBase.h>
 #include <android/content/Context.h>
 #include <android/content/IntentPrivate.h>
-#include <android/os/Binder.h>
-
-#include <unordered_map>
 
 namespace android {
 namespace app {
 
-class ApplicationLoader final : public Context, public Binder::Client {
+class ApplicationLoader final : public Context, public MessageClientBase<ApplicationLoader> {
     NONCOPYABLE(ApplicationLoader);
 public:
     ANDROID_EXPORT ApplicationLoader();
     ANDROID_EXPORT ~ApplicationLoader();
 
-    static const int32_t NO_ACTION = 0x00000001;
-    static const int32_t INITIALIZE_APPLICATION = 0x00000001;
-    static const int32_t BIND_SERVICE = 0x00000002;
-    static const int32_t SERVICE_CONNECTED = 0x00000003;
+    static const int32_t NO_ACTION = E(0);
+    static const int32_t INITIALIZE_APPLICATION = E(1);
+    static const int32_t BIND_SERVICE = E(2);
+    static const int32_t SERVICE_CONNECTED = E(3);
 
-    ANDROID_EXPORT int32_t start(intptr_t peer, StringRef component, std::unordered_map<String, String>& parameters);
+    ANDROID_EXPORT int32_t start(intptr_t root, StringRef component, std::unordered_map<String, String>& parameters);
 
     void sendOnBind(Service&, std::passed_ptr<IBinder>);
 
@@ -63,18 +60,15 @@ public:
 private:
     void writeResponseHeader(Parcel& parcel);
 
-    // Binder::Client
-    void onCreate() override;
-    void onDestroy() override;
+    // ApplicationProcess::MessageClient
     void onTimer() override;
-    void onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
+    bool onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
 
     ApplicationProcess& m_process;
-    std::shared_ptr<Binder> m_self;
-    std::shared_ptr<Binder> m_peer;
+    Binder* m_root { nullptr };
     String m_component;
     Intent m_intent;
-    int32_t m_state { 0 };
+    int32_t m_state { NO_ACTION };
     int32_t m_flags { 0 };
     std::unique_ptr<ApplicationContext> m_context;
 };

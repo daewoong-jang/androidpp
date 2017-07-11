@@ -25,31 +25,59 @@
 
 #pragma once
 
+#include <android/os/Binder.h>
 #include <android/os/Handler.h>
-#include <unordered_map>
+#include <android/os/Parcel.h>
 
 namespace android {
 namespace app {
 
-class ApplicationProcess final {
+class ApplicationProcess final : public Binder::Client {
 public:
+    class MessageClient {
+    public:
+        virtual void onTimer() = 0;
+        virtual bool onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) = 0;
+    };
+
     static ApplicationProcess& current();
     ~ApplicationProcess();
 
-    bool initializeProcess(std::unordered_map<String, String>& parameters);
-    bool initializeApplication(StringRef moduleName);
+    bool isRoot();
+    std::passed_ptr<Binder> self();
+    std::passed_ptr<Binder> root();
 
-    bool post(std::function<void ()> r);
-    bool postDelayed(std::function<void ()> r, std::chrono::milliseconds delayMillis);
+    bool initialize(intptr_t, std::unordered_map<String, String>& parameters);
+    bool load(StringRef moduleName);
+
+    intptr_t handle();
+    bool setTimeout();
+    bool setTimeout(std::chrono::milliseconds);
+
+    bool post(std::function<void ()>&& r);
+    bool postDelayed(std::function<void ()>&& r, std::chrono::milliseconds delayMillis);
+
+    void appendMessageClient(MessageClient*);
+    void removeMessageClient(MessageClient*);
 
 private:
     ApplicationProcess();
 
-    void platformInitialize();
+    void platformCreate();
     void platformDestroy();
+    bool platformInitialize(std::unordered_map<String, String>& parameters);
+
+    // Binder::Client
+    void onCreate() override;
+    void onDestroy() override;
+    void onTimer() override;
+    void onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags) override;
 
     void* m_module { nullptr };
+    std::shared_ptr<Binder> m_self;
+    std::shared_ptr<Binder> m_root;
     std::shared_ptr<Handler> m_mainThreadHandler;
+    std::vector<MessageClient*> m_messageClients;
 };
 
 } // namespace app

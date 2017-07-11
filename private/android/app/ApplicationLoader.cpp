@@ -38,21 +38,22 @@ namespace app {
 
 ApplicationLoader::ApplicationLoader()
     : m_process(app::ApplicationProcess::current())
-    , m_self(Binder::create(*this))
 {
+    m_process.appendMessageClient(this);
 }
 
 ApplicationLoader::~ApplicationLoader()
 {
+    m_process.removeMessageClient(this);
 }
 
-int32_t ApplicationLoader::start(intptr_t peer, StringRef component, std::unordered_map<String, String>& parameters)
+int32_t ApplicationLoader::start(intptr_t root, StringRef component, std::unordered_map<String, String>& parameters)
 {
-    if (!m_process.initializeProcess(parameters)) {
+    if (!m_process.initialize(root, parameters)) {
         LOGA("Process initialization failed");
     }
 
-    m_peer = Binder::adopt(peer);
+    m_root = m_process.root().get();
     m_component = component;
 
     Looper::prepareMainLooper();
@@ -60,7 +61,7 @@ int32_t ApplicationLoader::start(intptr_t peer, StringRef component, std::unorde
     Parcel parcel;
     writeResponseHeader(parcel);
 
-    if (!m_peer->transact(ApplicationLauncher::ACK_APPLICATION_LOADER, parcel, nullptr, IBinder::FLAG_ONEWAY)) {
+    if (!m_root->transact(ApplicationLauncher::ACK_APPLICATION_LOADER, parcel, nullptr, IBinder::FLAG_ONEWAY)) {
         LOGA("Connection to peer was broken before send back ACK_APPLICATION_LOADER");
         return -1;
     }
@@ -77,8 +78,8 @@ void ApplicationLoader::sendOnBind(Service& service, std::passed_ptr<IBinder> bi
     writeResponseHeader(parcel);
     parcel << (binder ? std::static_pointer_cast<Binder>(binder)->handle() : 0);
 
-    if (!m_peer->transact(ApplicationLauncher::SERVICE_ON_BIND, parcel, nullptr, IBinder::FLAG_ONEWAY)) {
-        LOGE("Connection to launcher is broken for peer %x after bound to service", m_peer->handle());
+    if (!m_root->transact(ApplicationLauncher::SERVICE_ON_BIND, parcel, nullptr, IBinder::FLAG_ONEWAY)) {
+        LOGE("Connection to launcher is broken for peer %x after bound to service", m_root->handle());
     }
 
     m_state = SERVICE_CONNECTED;
@@ -117,23 +118,15 @@ void ApplicationLoader::unbindService(std::passed_ptr<ServiceConnection> conn)
 void ApplicationLoader::writeResponseHeader(Parcel& parcel)
 {
     parcel << m_component;
-    parcel << m_self->handle();
+    parcel << m_process.handle();
     parcel << System::getProcessId();
-}
-
-void ApplicationLoader::onCreate()
-{
-}
-
-void ApplicationLoader::onDestroy()
-{
 }
 
 void ApplicationLoader::onTimer()
 {
     switch (m_state) {
     case INITIALIZE_APPLICATION: {
-        if (!m_process.initializeApplication(content::IntentPrivate::getPrivate(m_intent).getModuleName())) {
+        if (!m_process.load(content::IntentPrivate::getPrivate(m_intent).getModuleName())) {
             LOGA("Application initialization failed");
             break;
         }
@@ -141,8 +134,8 @@ void ApplicationLoader::onTimer()
         Parcel parcel;
         writeResponseHeader(parcel);
 
-        if (!m_peer->transact(ApplicationLauncher::APPLICATION_INITIALIZED, parcel, nullptr, IBinder::FLAG_ONEWAY)) {
-            LOGE("Connection to launcher is broken for peer %x after initialization", m_peer->handle());
+        if (!m_root->transact(ApplicationLauncher::APPLICATION_INITIALIZED, parcel, nullptr, IBinder::FLAG_ONEWAY)) {
+            LOGE("Connection to launcher is broken for peer %x after initialization", m_root->handle());
             break;
         }
         break;
@@ -151,14 +144,19 @@ void ApplicationLoader::onTimer()
         m_context->setApplication(m_intent, BIND_SERVICE, m_flags);
         return;
     }
+    case SERVICE_CONNECTED:
+        break;
+    case NO_ACTION:
+        return;
     default:
+        LOGA("False state %d for ApplicationLoader", m_state);
         break;
     }
 
     m_state = NO_ACTION;
 }
 
-void ApplicationLoader::onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+bool ApplicationLoader::onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
 {
     switch (code) {
     case INITIALIZE_APPLICATION: {
@@ -180,13 +178,16 @@ void ApplicationLoader::onTransaction(int32_t code, Parcel& data, Parcel* reply,
         m_flags = flags;
         break;
     }
+    case SERVICE_CONNECTED:
+    case NO_ACTION:
+        LOGA("False transaction code %d for ApplicationLoader", code);
     default:
-        LOGA("False transaction code %d for ApplicationLauncher", code);
-        break;
+        return false;
     }
 
     m_state = code;
-    m_self->start();
+    m_process.setTimeout();
+    return true;
 }
 
 } // namespace app

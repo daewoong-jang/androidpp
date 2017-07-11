@@ -34,7 +34,8 @@ namespace lang {
 
 int64_t System::getProcessId()
 {
-    return ::GetCurrentProcessId();
+    static const int64_t myPid = ::GetCurrentProcessId();
+    return myPid;
 }
 
 static const wchar_t* systemDLLName()

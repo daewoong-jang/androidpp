@@ -25,47 +25,27 @@
 
 #pragma once
 
-#include <android/os/Binder.h>
+#include <android/os/BinderProvider.h>
 
 #include <windows.h>
 
 namespace android {
 namespace os {
 
-class BinderWin : public Binder {
+class BinderProviderWin final : public BinderProvider {
 public:
-    BinderWin(HWND, Client*);
-    virtual ~BinderWin();
+    BinderProviderWin(Client&);
+    virtual ~BinderProviderWin();
 
-    intptr_t handle() const override { return reinterpret_cast<intptr_t>(m_hwnd); }
-    virtual app::HostWindow* window() override { return nullptr; }
+    intptr_t handle() const override;
 
-    virtual bool transact(int32_t code, Parcel& data, int32_t flags) override;
+    bool start() override;
+    bool startAtTime(std::chrono::milliseconds) override;
+    void stop() override;
 
-protected:
-    HWND m_hwnd;
-};
+    void close() override;
 
-class LocalBinderWin : public BinderWin {
-public:
-    LocalBinderWin(HWND, Client*);
-    virtual ~LocalBinderWin();
-
-    bool isLocal() const override { return true; }
-
-    virtual bool transact(int32_t code, Parcel& data, int32_t flags) override;
-};
-
-class MessageBinderWin : public LocalBinderWin {
-public:
-    MessageBinderWin(Client*);
-    virtual ~MessageBinderWin();
-
-    bool start();
-    bool startAtTime(std::chrono::milliseconds);
-    void stop();
-
-    void close();
+    bool transact(Binder* destination, int32_t code, Parcel& data, int32_t flags) override;
 
 private:
     static void registerMessageWindowClass();
@@ -74,6 +54,7 @@ private:
     static LRESULT messageWindowProcInternal(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     static void NTAPI messageWindowQueueTimerCallback(PVOID parameter, BOOLEAN);
 
+    HWND m_hwnd;
     UINT m_activeTimerID;
     bool m_shouldUseHighResolutionTimers;
     HANDLE m_timerQueue;

@@ -127,7 +127,7 @@ static void pauseProcessIfNeeded(HMODULE module)
 }
 #endif
 
-void ApplicationProcess::platformInitialize()
+void ApplicationProcess::platformCreate()
 {
     HRESULT hRes = ::OleInitialize(NULL);
     assert(SUCCEEDED(hRes));
@@ -138,7 +138,7 @@ void ApplicationProcess::platformDestroy()
     ::OleUninitialize();
 }
 
-bool ApplicationProcess::initializeProcess(std::unordered_map<String, String>& parameters)
+bool ApplicationProcess::platformInitialize(std::unordered_map<String, String>& parameters)
 {
     enableDataExecutionPrevention();
     enableTerminationOnHeapCorruption();
@@ -147,7 +147,7 @@ bool ApplicationProcess::initializeProcess(std::unordered_map<String, String>& p
     return true;
 }
 
-bool ApplicationProcess::initializeApplication(StringRef moduleName)
+bool ApplicationProcess::load(StringRef moduleName)
 {
     HMODULE module = ::LoadLibraryW(moduleName.c_str());
     if (!module) {

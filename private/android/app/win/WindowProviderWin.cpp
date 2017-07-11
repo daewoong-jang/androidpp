@@ -60,18 +60,19 @@ static RECT windowClientRect(WindowHandle parentWindow, const Rect& clientRect)
     return defaultClientRect;
 }
 
-class BinderWindow final : public os::LocalBinderWin {
+class BinderWindow final : public os::Binder {
 public:
-    BinderWindow(HWND, HostWindow&);
+    BinderWindow(HostWindow&);
     ~BinderWindow() = default;
 
+    intptr_t handle() const override { return reinterpret_cast<intptr_t>(hostWindow.window()->windowHandle()); }
     app::HostWindow* window() override { return &hostWindow; }
 
     HostWindow& hostWindow;
 };
 
-BinderWindow::BinderWindow(HWND hwnd, HostWindow& window)
-    : os::LocalBinderWin(hwnd, nullptr)
+BinderWindow::BinderWindow(HostWindow& window)
+    : os::Binder(nullptr)
     , hostWindow(window)
 {
 }
@@ -95,7 +96,7 @@ WindowProviderWin::WindowProviderWin(WindowHandle parentWindow, const Rect& clie
     Create(reinterpret_cast<HWND>(parentWindow), ATL::_U_RECT(windowClientRect(parentWindow, clientRect)), _T("Android++"),
         parentWindow ? WS_CHILDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS : WS_OVERLAPPEDWINDOW);
 
-    m_windowToken = std::make_shared<BinderWindow>(hwnd(), host);
+    m_windowToken = std::make_shared<BinderWindow>(host);
 
     loadIMM();
     enableInputMethod(false);

@@ -16,6 +16,7 @@ set(APP_HEADERS
     ApplicationLoader.h
     ApplicationProcess.h
     HostWindow.h
+    MessageClientBase.h
     ServiceHostWindow.h
     ServicePrivate.h
     WindowHandle.h

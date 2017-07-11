@@ -1,5 +1,6 @@
 set(OS_SOURCES
     Binder.cpp
+    BinderProvider.cpp
     BundlePrivate.cpp
     HandlerProvider.cpp
     MessageTarget.cpp
@@ -9,6 +10,7 @@ set(OS_SOURCES
 
 set(OS_HEADERS
     Binder.h
+    BinderProvider.h
     BundlePrivate.h
     HandlerProvider.h
     MessageTarget.h

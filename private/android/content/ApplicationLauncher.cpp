@@ -36,8 +36,14 @@ namespace android {
 namespace content {
 
 ApplicationLauncher::ApplicationLauncher()
-    : m_self(Binder::create(*this))
+    : m_process(app::ApplicationProcess::current())
 {
+    m_process.appendMessageClient(this);
+}
+
+ApplicationLauncher::~ApplicationLauncher()
+{
+    m_process.removeMessageClient(this);
 }
 
 ApplicationLauncher& ApplicationLauncher::get()
@@ -55,7 +61,7 @@ public:
     intptr_t phandle { 0 };
     int64_t pid { 0 };
     std::shared_ptr<Binder> peer;
-    int32_t state { 0 };
+    int32_t state { ApplicationLauncher::NO_ACTION };
     int32_t command { 0 };
     std::shared_ptr<Binder> bind;
 
@@ -100,12 +106,26 @@ void ApplicationLauncher::unbindService(std::passed_ptr<ServiceConnection> conn)
 {
 }
 
-void ApplicationLauncher::onCreate()
+ApplicationLauncher::ResponseHeaderData ApplicationLauncher::readResponseHeader(Parcel& parcel)
 {
-}
+    String component;
+    intptr_t peer;
+    int64_t pid;
 
-void ApplicationLauncher::onDestroy()
-{
+    parcel >> component;
+    parcel >> peer;
+    parcel >> pid;
+
+    if (!m_applications.count(component)) {
+        LOGA("Unknown component: %s", std::ws2s(component).c_str());
+        return { };
+    }
+
+    ResponseHeaderData header;
+    header.first = m_applications[component].get();
+    header.second.first = peer;
+    header.second.second = pid;
+    return header;
 }
 
 void ApplicationLauncher::onTimer()
@@ -144,7 +164,11 @@ void ApplicationLauncher::onTimer()
             break;
         }
         case APPLICATION_STARTED:
+            break;
+        case NO_ACTION:
+            return;
         default:
+            LOGA("ApplicationLauncher: False state %d for application", application->state);
             break;
         }
 
@@ -152,44 +176,34 @@ void ApplicationLauncher::onTimer()
     }
 }
 
-void ApplicationLauncher::onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
+bool ApplicationLauncher::onTransaction(int32_t code, Parcel& data, Parcel* reply, int32_t flags)
 {
-    String component;
-    intptr_t peer;
-    int64_t pid;
-
-    data >> component;
-    data >> peer;
-    data>> pid;
-
-    if (!m_applications.count(component)) {
-        LOGA("Unknown component: %s", std::ws2s(component).c_str());
-        return;
-    }
-
-    auto& application = m_applications[component];
-
+    ResponseHeaderData header;
     switch (code) {
     case ACK_APPLICATION_LOADER: {
-        application->pid = pid;
-        application->peer = Binder::adopt(peer);
+        header = readResponseHeader(data);
+        header.first->peer = Binder::adopt(header.second.first);
+        header.first->pid = header.second.second;
+        break;
     }
     case APPLICATION_INITIALIZED:
     case APPLICATION_STARTED:
+        header = readResponseHeader(data);
         break;
     case SERVICE_ON_BIND: {
+        header = readResponseHeader(data);
         intptr_t handle;
         data >> handle;
-        application->bind = handle ? Binder::adopt(handle) : nullptr;
+        header.first->bind = handle ? Binder::adopt(handle) : nullptr;
         break;
     }
     default:
-        LOGA("False transaction code %d for ApplicationLauncher", code);
-        return;
+        return false;
     }
 
-    application->state = code;
-    m_self->start();
+    header.first->state = code;
+    m_process.setTimeout();
+    return true;
 }
 
 } // namespace content
