@@ -1,9 +1,11 @@
 set(OPENGL_SOURCES
     GLSurfaceView.cpp
+    Matrix.cpp
 )
 
 set(OPENGL_HEADERS
     GLSurfaceView.h
+    Matrix.h
 )
 
 include_directories(
