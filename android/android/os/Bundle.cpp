@@ -202,7 +202,7 @@ public:
     {
         auto result = std::make_shared<Bundle>();
         result->readFromParcel(source);
-        return std::move(result);
+        return result;
     }
 
     std::vector<std::shared_ptr<Parcelable>> newArray(int32_t size) override
@@ -223,7 +223,7 @@ int32_t Bundle::describeContents()
     return 0;
 }
 
-void Bundle::writeToParcel(Parcel& dest, int32_t flags)
+void Bundle::writeToParcel(Parcel& dest, int32_t flags) const
 {
     dest << ParcelableCreator::creator<Bundle>().binaryName;
     m_private->writeToParcel(dest, flags);

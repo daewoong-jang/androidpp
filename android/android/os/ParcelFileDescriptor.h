@@ -47,7 +47,7 @@ public:
     // Describe the kinds of special objects contained in this Parcelable instance's marshaled representation.
     ANDROID_EXPORT virtual int32_t describeContents() override;
     // Flatten this object in to a Parcel. If PARCELABLE_WRITE_RETURN_VALUE is set in flags, the file descriptor will be closed after a copy is written to the Parcel. 
-    ANDROID_EXPORT virtual void writeToParcel(Parcel& dest, int32_t flags) override;
+    ANDROID_EXPORT virtual void writeToParcel(Parcel& dest, int32_t flags) const override;
 
 private:
     int32_t m_fd { 0 };

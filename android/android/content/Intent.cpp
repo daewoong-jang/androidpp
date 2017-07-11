@@ -170,7 +170,7 @@ public:
         result->m_private->m_extras = std::move(*extras);
         result->m_private->m_privateExtras = std::move(*extras);
         result->m_private->setModuleName(moduleName);
-        return std::move(result);
+        return result;
     }
 
     std::vector<std::shared_ptr<Parcelable>> newArray(int32_t size) override
@@ -191,7 +191,7 @@ int32_t Intent::describeContents()
     return 0;
 }
 
-void Intent::writeToParcel(Parcel& dest, int32_t flags)
+void Intent::writeToParcel(Parcel& dest, int32_t flags) const
 {
     dest << ParcelableCreator::creator<Intent>().binaryName;
     m_private->m_componentName.writeToParcel(dest, flags);

@@ -109,7 +109,7 @@ public:
         auto result = std::make_shared<ComponentName>();
         source >> result->m_packageName;
         source >> result->m_className;
-        return std::move(result);
+        return result;
     }
 
     std::vector<std::shared_ptr<Parcelable>> newArray(int32_t size) override
@@ -130,7 +130,7 @@ int32_t ComponentName::describeContents()
     return 0;
 }
 
-void ComponentName::writeToParcel(Parcel& dest, int32_t flags)
+void ComponentName::writeToParcel(Parcel& dest, int32_t flags) const
 {
     dest << ParcelableCreator::creator<ComponentName>().binaryName;
     dest << m_packageName;

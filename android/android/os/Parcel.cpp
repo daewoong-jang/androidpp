@@ -26,6 +26,7 @@
 #include "Parcel.h"
 
 #include <android/os/ParcelPrivate.h>
+#include <android/os/ParcelablePrivate.h>
 
 namespace android {
 namespace os {
@@ -131,6 +132,12 @@ Parcel& Parcel::operator<<(const CharSequence& value)
     return *this;
 }
 
+Parcel& Parcel::operator<<(const Parcelable& value)
+{
+    value.writeToParcel(*this, 0);
+    return *this;
+}
+
 Parcel& Parcel::operator>>(bool& value)
 {
     m_private->read(&value, sizeof(value), sizeof(value));
@@ -204,6 +211,12 @@ Parcel& Parcel::operator>>(CharSequence& value)
         return *this;
 
     value.assign(CharSequence(reinterpret_cast<CharSequence::value_type*>(data), length));
+    return *this;
+}
+
+Parcel& Parcel::operator>>(std::shared_ptr<Parcelable>& value)
+{
+    value = ParcelablePrivate::createFromParcel(*this);
     return *this;
 }
 

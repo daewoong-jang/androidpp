@@ -27,6 +27,7 @@
 
 #include <android/os/Binder.h>
 #include <android/os/Bundle.h>
+#include <android/os/BundlePrivate.h>
 #include <android/os/Messenger.h>
 #include <android/os/ParcelPrivate.h>
 #include <android/os/ParcelablePrivate.h>
@@ -38,7 +39,6 @@ Message::Message()
     : what(0)
     , arg1(0)
     , arg2(0)
-    , obj(0)
     , target(0)
     , replyTo(0)
     , data(nullptr)
@@ -131,7 +131,7 @@ Message Message::obtain(Handler::ptr_t h, int32_t what, int32_t arg1, int32_t ar
     return m;
 }
 
-Message Message::obtain(Handler::ptr_t h, int32_t what, intptr_t obj)
+Message Message::obtain(Handler::ptr_t h, int32_t what, std::passed_ptr<Parcelable> obj)
 {
     Message m;
     m.what = what;
@@ -140,7 +140,7 @@ Message Message::obtain(Handler::ptr_t h, int32_t what, intptr_t obj)
     return m;
 }
 
-Message Message::obtain(Handler::ptr_t h, int32_t what, int32_t arg1, int32_t arg2, intptr_t obj)
+Message Message::obtain(Handler::ptr_t h, int32_t what, int32_t arg1, int32_t arg2, std::passed_ptr<Parcelable> obj)
 {
     Message m;
     m.what = what;
@@ -201,7 +201,12 @@ public:
         source >> result->what;
         source >> result->arg1;
         source >> result->arg2;
-        source >> result->obj;
+        bool hasObj;
+        source >> hasObj;
+        if (hasObj) {
+            auto obj = ParcelablePrivate::createFromParcel(source);
+            result->obj = BundlePrivate::getPrivate(result->getData()).setMessageObj(obj);
+        }
         intptr_t handle;
         source >> handle;
         if (handle)
@@ -212,10 +217,9 @@ public:
             String binaryName;
             source >> binaryName;
             assert(binaryName == ParcelableCreator::creator<Bundle>().binaryName);
-            result->data = new Bundle();
-            result->data->readFromParcel(source);
+            result->getData().readFromParcel(source);
         }
-        return std::move(result);
+        return result;
     }
 
     std::vector<std::shared_ptr<Parcelable>> newArray(int32_t size) override
@@ -236,13 +240,15 @@ int32_t Message::describeContents()
     return 0;
 }
 
-void Message::writeToParcel(Parcel& dest, int32_t flags)
+void Message::writeToParcel(Parcel& dest, int32_t flags) const
 {
     dest << ParcelableCreator::creator<Message>().binaryName;
     dest << what;
     dest << arg1;
     dest << arg2;
-    dest << obj;
+    dest << (obj ? true : false);
+    if (obj)
+        obj->writeToParcel(dest, flags);
     intptr_t handle = 0;
     if (replyTo) {
         auto binder = std::static_pointer_cast<Binder>(replyTo->getBinder());
@@ -250,8 +256,9 @@ void Message::writeToParcel(Parcel& dest, int32_t flags)
         ParcelPrivate::getPrivate(dest).setOrigin(binder);
     }
     dest << handle;
-    dest << (data ? true : false);
-    if (data)
+    bool hasData = (data && BundlePrivate::getPrivate(*data).count() > 0);
+    dest << hasData;
+    if (hasData)
         data->writeToParcel(dest, flags);
 }
 

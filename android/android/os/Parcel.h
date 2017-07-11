@@ -31,6 +31,7 @@ namespace android {
 namespace os {
 
 class ParcelPrivate;
+class Parcelable;
 
 class Parcel final {
     friend class ParcelPrivate;
@@ -57,6 +58,7 @@ public:
     ANDROID_EXPORT Parcel& operator<<(double);
     ANDROID_EXPORT Parcel& operator<<(const std::string&);
     ANDROID_EXPORT Parcel& operator<<(const CharSequence&);
+    ANDROID_EXPORT Parcel& operator<<(const Parcelable&);
 
     ANDROID_EXPORT Parcel& operator>>(bool&);
     ANDROID_EXPORT Parcel& operator>>(wchar_t&);
@@ -69,6 +71,7 @@ public:
     ANDROID_EXPORT Parcel& operator>>(double&);
     ANDROID_EXPORT Parcel& operator>>(std::string&);
     ANDROID_EXPORT Parcel& operator>>(CharSequence&);
+    ANDROID_EXPORT Parcel& operator>>(std::shared_ptr<Parcelable>&);
 
 private:
     std::shared_ptr<ParcelPrivate> m_private;

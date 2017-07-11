@@ -83,4 +83,54 @@ private:
     std::function<T* ()> m_ctor;
 };
 
+template<typename T>
+class proxy_ptr {
+public:
+    proxy_ptr() = default;
+    ~proxy_ptr() = default;
+    proxy_ptr(const proxy_ptr& other)
+        : m_ptr(other.m_ptr)
+    {
+    }
+    proxy_ptr(proxy_ptr&& other)
+        : m_ptr(other.m_ptr)
+    {
+        other.m_ptr = nullptr;
+    }
+
+    operator bool() const
+    {
+        return !!m_ptr;
+    }
+
+    operator std::shared_ptr<T>()
+    {
+        return ptr();
+    }
+    proxy_ptr& operator=(const std::shared_ptr<T>& o)
+    {
+        m_ptr = &o;
+        return *this;
+    }
+    proxy_ptr& operator=(const proxy_ptr& other)
+    {
+        m_ptr = other.m_ptr;
+        return *this;
+    }
+
+    T* operator->() const { return m_ptr->get(); }
+    const std::shared_ptr<T>& operator*() const { return *m_ptr; }
+
+    std::shared_ptr<T> ptr() const { return m_ptr ? *m_ptr : nullptr; }
+
+private:
+    const std::shared_ptr<T>* m_ptr { nullptr };
+};
+
+template<typename T, typename U>
+std::shared_ptr<T> static_pointer_cast(const std::proxy_ptr<U>& r)
+{
+    return std::static_pointer_cast<T>(r.ptr());
+}
+
 }

@@ -61,7 +61,7 @@ public:
     ANDROID_EXPORT static const std::lazy_ptr<Parcelable::Creator> CREATOR;
 
     ANDROID_EXPORT int32_t describeContents() override;
-    ANDROID_EXPORT void writeToParcel(Parcel& dest, int32_t flags) override;
+    ANDROID_EXPORT void writeToParcel(Parcel& dest, int32_t flags) const override;
 
 private:
     String m_packageName;

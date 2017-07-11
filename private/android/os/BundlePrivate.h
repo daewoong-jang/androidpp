@@ -62,6 +62,7 @@ public:
     static BundlePrivate& getPrivate(Bundle&);
     static void setPrivate(Bundle&, std::unique_ptr<BundlePrivate>&&);
 
+    int32_t count();
     bool findKey(StringRef key);
     void clear();
     void remove(StringRef key);
@@ -78,6 +79,9 @@ public:
     void writeToParcel(Parcel& dest, int32_t flags);
     void readFromParcel(Parcel& source);
 
+    std::passed_ptr<Parcelable> getMessageObj();
+    std::passed_ptr<Parcelable> setMessageObj(std::passed_ptr<Parcelable> value);
+
 private:
     void removeKey(StringRef key);
 
@@ -85,6 +89,7 @@ private:
     std::unordered_map<String, BundleValue> m_values;
     std::unordered_map<String, std::unique_ptr<CharSequence>> m_charSequences;
     std::unordered_map<String, std::shared_ptr<Parcelable>> m_parcelables;
+    std::shared_ptr<Parcelable> m_messageObjHolder;
 };
 
 } // namespace os

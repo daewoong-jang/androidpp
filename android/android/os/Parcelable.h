@@ -52,7 +52,7 @@ public:
     // Describe the kinds of special objects contained in this Parcelable instance's marshaled representation.
     virtual int32_t describeContents() = 0;
     // Flatten this object in to a Parcel.
-    virtual void writeToParcel(Parcel& dest, int32_t flags) = 0;
+    virtual void writeToParcel(Parcel& dest, int32_t flags) const = 0;
 
 protected:
     ANDROID_EXPORT Parcelable() = default;

@@ -32,6 +32,7 @@ namespace android {
 namespace os {
 
 class Messenger;
+class Parcelable;
 
 class Message final : public Parcelable {
     friend class MessageCreator;
@@ -39,7 +40,7 @@ public:
     int32_t what;
     int32_t arg1;
     int32_t arg2;
-    intptr_t obj;
+    std::proxy_ptr<Parcelable> obj;
     Handler::ptr_t target;
     Messenger* replyTo;
 
@@ -62,10 +63,10 @@ public:
     ANDROID_EXPORT static Message obtain(Handler::ptr_t h, int32_t what,
             int32_t arg1, int32_t arg2);
     // Same as obtain(), but sets the values of the target, what, and obj members.
-    ANDROID_EXPORT static Message obtain(Handler::ptr_t h, int32_t what, intptr_t obj);
+    ANDROID_EXPORT static Message obtain(Handler::ptr_t h, int32_t what, std::passed_ptr<Parcelable> obj);
     // Same as obtain(), but sets the values of the target, what, arg1, arg2, and obj members.
     ANDROID_EXPORT static Message obtain(Handler::ptr_t h, int32_t what,
-            int32_t arg1, int32_t arg2, intptr_t obj);
+            int32_t arg1, int32_t arg2, std::passed_ptr<Parcelable> obj);
 
     // Same as obtain(), but copies the values of an existing message (including its target) into the new one.
     ANDROID_EXPORT static Message obtain(const Message& orig);
@@ -82,7 +83,7 @@ public:
     ANDROID_EXPORT static const std::lazy_ptr<Parcelable::Creator> CREATOR;
 
     ANDROID_EXPORT virtual int32_t describeContents() override;
-    ANDROID_EXPORT virtual void writeToParcel(Parcel& dest, int32_t flags);
+    ANDROID_EXPORT virtual void writeToParcel(Parcel& dest, int32_t flags) const override;
 
 private:
     mutable Bundle* data;

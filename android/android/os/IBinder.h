@@ -39,6 +39,9 @@ public:
 
     // The first transaction code available for user commands.
     static const int32_t FIRST_CALL_TRANSACTION = 0x00000001;
+    // The last transaction code available for user commands. 
+    static const int32_t LAST_CALL_TRANSACTION = 0x00ffffff;
+    
     // IBinder protocol transaction code: interrogate the recipient side of the transaction for its canonical interface descriptor. 
     static const int32_t INTERFACE_TRANSACTION = 0x5f4e5446;
     // IBinder protocol transaction code: pingBinder(). 
@@ -49,8 +52,6 @@ public:
     static const int32_t LIKE_TRANSACTION = 0x5f4c494b;
     // IBinder protocol transaction code: send a tweet to the target object. 
     static const int32_t TWEET_TRANSACTION = 0x5f545754;
-    // The last transaction code available for user commands. 
-    static const int32_t LAST_CALL_TRANSACTION = 0x00ffffff;
 
     // Flag to transact(int, Parcel, Parcel, int): this is a one-way call, meaning that the caller returns immediately, without waiting for a result from the callee. 
     static const int32_t FLAG_ONEWAY = 0x00000001;

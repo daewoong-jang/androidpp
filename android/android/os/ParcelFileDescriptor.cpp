@@ -41,7 +41,7 @@ public:
         result->m_handle = std::get<1>(keyValue);
         result->m_sourcePid = std::get<2>(keyValue);
         result->m_close = std::get<3>(keyValue);
-        return std::move(result);
+        return result;
     }
 
     std::vector<std::shared_ptr<Parcelable>> newArray(int32_t size) override
@@ -70,7 +70,7 @@ std::shared_ptr<ParcelFileDescriptor> ParcelFileDescriptor::adoptFd(int32_t fd)
     auto result = std::make_shared<ParcelFileDescriptor>();
     result->m_fd = fd;
     result->m_handle = PlatformFileDescriptor::adoptFd(fd);
-    return std::move(result);
+    return result;
 }
 
 int32_t ParcelFileDescriptor::detachFd()
@@ -83,7 +83,7 @@ int32_t ParcelFileDescriptor::describeContents()
     return Parcelable::CONTENTS_FILE_DESCRIPTOR;
 }
 
-void ParcelFileDescriptor::writeToParcel(Parcel& dest, int32_t flags)
+void ParcelFileDescriptor::writeToParcel(Parcel& dest, int32_t flags) const
 {
     dest << ParcelableCreator::creator<ParcelFileDescriptor>().binaryName;
     PlatformFileDescriptor::encode(dest, m_fd, m_handle, flags);

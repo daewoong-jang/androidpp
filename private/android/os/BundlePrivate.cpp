@@ -40,6 +40,11 @@ void BundlePrivate::setPrivate(Bundle& bundle, std::unique_ptr<BundlePrivate>&& 
     bundle.m_private = std::move(bundlePrivate);
 }
 
+int32_t BundlePrivate::count()
+{
+    return m_keys.size();
+}
+
 bool BundlePrivate::findKey(StringRef key)
 {
     return m_keys.count(key);
@@ -161,6 +166,17 @@ void BundlePrivate::readFromParcel(Parcel& source)
         m_keys.insert(key);
         m_parcelables[key] = ParcelablePrivate::createFromParcel(source);
     }
+}
+
+std::passed_ptr<Parcelable> BundlePrivate::getMessageObj()
+{
+    return m_messageObjHolder;
+}
+
+std::passed_ptr<Parcelable> BundlePrivate::setMessageObj(std::passed_ptr<Parcelable> obj)
+{
+    m_messageObjHolder = obj;
+    return m_messageObjHolder;
 }
 
 void BundlePrivate::removeKey(StringRef key)
