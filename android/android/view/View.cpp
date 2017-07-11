@@ -29,6 +29,7 @@
 #include <android/app/WindowProvider.h>
 #include <android/content/ContextWrapper.h>
 #include <android/view/ViewPrivate.h>
+#include <android++/LogHelper.h>
 
 namespace android {
 namespace view {
@@ -39,6 +40,7 @@ View::View(Context& context)
     , m_visibility(INVISIBLE)
     , m_hasFocus(false)
     , m_focusable(false)
+    , m_handler(new Handler)
     , m_private(std::make_unique<ViewPrivate>(*this))
 {
 }
@@ -98,6 +100,11 @@ void View::invalidate()
 
 void View::invalidate(Rect&)
 {
+}
+
+bool View::post(std::function<void ()>&& r)
+{
+    return m_handler->post(std::move(r));
 }
 
 std::shared_ptr<InputConnection> View::onCreateInputConnection(EditorInfo& outAttrs)

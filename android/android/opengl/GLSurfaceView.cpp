@@ -530,7 +530,7 @@ private:
     }
 
 public:
-    void queueEvent(std::function<void ()> r)
+    void queueEvent(std::function<void ()>&& r)
     {
         if (!r) {
             LOGA("r must not be null");
@@ -653,7 +653,7 @@ void GLSurfaceView::onPause()
     m_glThread->onPause();
 }
 
-void GLSurfaceView::queueEvent(std::function<void ()> r)
+void GLSurfaceView::queueEvent(std::function<void ()>&& r)
 {
     m_glThread->queueEvent(std::move(r));
 }

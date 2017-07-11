@@ -80,7 +80,7 @@ public:
     ANDROID_EXPORT virtual void onPause();
 
     // Queue a runnable to be run on the GL rendering thread. 
-    ANDROID_EXPORT virtual void queueEvent(std::function<void ()> r);
+    ANDROID_EXPORT virtual void queueEvent(std::function<void ()>&& r);
 
     // view.View
     ANDROID_EXPORT virtual void onAttachedToWindow() override;

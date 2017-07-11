@@ -29,9 +29,11 @@
 #include <android/content/res/Configuration.h>
 #include <android/graphics/Point.h>
 #include <android/graphics/Rect.h>
+#include <android/os/Handler.h>
 #include <android/os/IBinder.h>
 #include <android/view/inputmethod/EditorInfo.h>
 #include <android/view/inputmethod/InputConnection.h>
+#include <android++/Noncopyable.h>
 
 namespace android {
 namespace app {
@@ -49,6 +51,7 @@ class View {
     friend class ViewGroup;
     friend class ViewPrivate;
     friend class app::ActivityHostWindow;
+    NONCOPYABLE(View);
 public:
     // This view is visible.
     static const int32_t VISIBLE = 0;
@@ -104,6 +107,9 @@ public:
     ANDROID_EXPORT virtual void invalidate();
     // Mark the area defined by dirty as needing to be drawn.
     ANDROID_EXPORT virtual void invalidate(Rect&);
+
+    // Causes the std::function<void ()> r to be added to the message queue.
+    ANDROID_EXPORT virtual bool post(std::function<void ()>&& r);
 
     // Return whether this view has an attached OnClickListener.
     ANDROID_EXPORT virtual bool hasOnClickListeners() { return m_clickListener.target<void (View*)>() != nullptr; }
@@ -163,6 +169,7 @@ private:
     int32_t m_visibility;
     bool m_hasFocus;
     bool m_focusable;
+    std::unique_ptr<Handler> m_handler;
 
     OnClickListener m_clickListener;
     OnFocusChangeListener m_focusChangeListener;
