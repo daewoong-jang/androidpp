@@ -32,7 +32,6 @@
 using namespace std::chrono_literals;
 
 #include <android++/Assertions.h>
-#include <android++/IdentifierErasure.h>
 #include <android++/Noncopyable.h>
 #include <android++/PointerTypes.h>
 

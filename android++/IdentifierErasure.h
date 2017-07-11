@@ -32,3 +32,11 @@
 #ifdef ERROR_INVALID_OPERATION
 #undef ERROR_INVALID_OPERATION
 #endif
+
+#ifdef far
+#undef far
+#endif
+
+#ifdef near
+#undef near
+#endif
