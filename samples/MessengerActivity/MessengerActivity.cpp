@@ -87,7 +87,7 @@ bool MessengerActivity::onGenericMotionEvent(MotionEvent& event)
 {
     LOGD("%s", __FUNCTION__);
     if (event.getSource() == InputDevice::SOURCE_MOUSE &&
-        event.getAction() == MotionEvent::ACTION_BUTTON_RELEASE)
+        event.getAction() == MotionEvent::ACTION_UP)
         sayHello();
     return false;
 }

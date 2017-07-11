@@ -27,6 +27,7 @@
 
 #include <android/media/AudioFormat.h>
 #include <android/os/Handler.h>
+#include <android++/IdentifierErasure.h>
 
 namespace android {
 namespace media {

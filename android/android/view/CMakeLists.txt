@@ -4,6 +4,7 @@ set(VIEW_SOURCES
     InputEvent.cpp
     KeyEvent.cpp
     MotionEvent.cpp
+    Surface.cpp
     View.cpp
     ViewGroup.cpp
 )
@@ -17,6 +18,7 @@ set(VIEW_HEADERS
     Menu.h
     MenuItem.h
     MotionEvent.h
+    Surface.h
     View.h
     ViewGroup.h
     Window.h

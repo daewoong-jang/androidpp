@@ -26,6 +26,7 @@
 #pragma once
 
 #include <android/content/Context.h>
+#include <android/view/Surface.h>
 #include <android++/Functional.h>
 
 #include <map>
@@ -36,7 +37,6 @@ namespace media {
 class MediaPlayerPrivate;
 
 class MediaPlayer {
-    NONCOPYABLE(MediaPlayer);
     friend class MediaPlayerPrivate;
 public:  
     // File or network related operation errors.
@@ -80,9 +80,13 @@ public:
     static const int32_t VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING = 0x00000002;
 
     // Default constructor.
-    ANDROID_EXPORT static std::shared_ptr<MediaPlayer> create();
+    ANDROID_EXPORT MediaPlayer();
     // Convenience method to create a MediaPlayer for a given uri.
-    ANDROID_EXPORT static std::shared_ptr<MediaPlayer> create(String& uri);
+    ANDROID_EXPORT MediaPlayer(StringRef uri);
+    ANDROID_EXPORT MediaPlayer(const MediaPlayer&);
+    ANDROID_EXPORT MediaPlayer(MediaPlayer&&);
+    ANDROID_EXPORT MediaPlayer& operator=(const MediaPlayer&);
+    ANDROID_EXPORT MediaPlayer& operator=(MediaPlayer&&);
     ANDROID_EXPORT virtual ~MediaPlayer();
 
     typedef std::function<void (int32_t)> OnBufferingUpdateListener;
@@ -109,7 +113,7 @@ public:
     };
 
     // Adds an external timed text source file.
-    ANDROID_EXPORT virtual void addTimedTextSource(String& path, String& mimeType);
+    ANDROID_EXPORT virtual void addTimedTextSource(StringRef path, StringRef mimeType);
     // Deselect a track.
     ANDROID_EXPORT virtual void deselectTrack(int32_t index);
 
@@ -147,28 +151,28 @@ public:
     ANDROID_EXPORT virtual void selectTrack(int32_t index);
 
     // Sets the data source (file-path or http/rtsp URL) to use.
-    ANDROID_EXPORT virtual void setDataSource(String& path);
+    ANDROID_EXPORT virtual void setDataSource(StringRef path);
     // Sets the data source as a content Uri.
-    ANDROID_EXPORT virtual void setDataSource(Context& context, String& uri, const std::map<String, String>& headers);
+    ANDROID_EXPORT virtual void setDataSource(Context& context, StringRef uri, const std::map<String, String>& headers);
 
     // Sets the player to be looping or non-looping.
     ANDROID_EXPORT virtual void setLooping(bool looping);
     // Register a callback to be invoked when the status of a network stream's buffer has changed.
-    ANDROID_EXPORT virtual void setOnBufferingUpdateListener(OnBufferingUpdateListener listener);
+    ANDROID_EXPORT virtual void setOnBufferingUpdateListener(OnBufferingUpdateListener&& listener);
     // Register a callback to be invoked when the end of a media source has been reached during playback.
-    ANDROID_EXPORT virtual void setOnCompletionListener(OnCompletionListener listener);
+    ANDROID_EXPORT virtual void setOnCompletionListener(OnCompletionListener&& listener);
     // Register a callback to be invoked when an error has happened during an asynchronous operation.
-    ANDROID_EXPORT virtual void setOnErrorListener(OnErrorListener listener);
+    ANDROID_EXPORT virtual void setOnErrorListener(OnErrorListener&& listener);
     // Register a callback to be invoked when an info/warning is available.
-    ANDROID_EXPORT virtual void setOnInfoListener(OnInfoListener listener);
+    ANDROID_EXPORT virtual void setOnInfoListener(OnInfoListener&& listener);
     // Register a callback to be invoked when the media source is ready for playback.
-    ANDROID_EXPORT virtual void setOnPreparedListener(OnPreparedListener listener);
+    ANDROID_EXPORT virtual void setOnPreparedListener(OnPreparedListener&& listener);
     // Register a callback to be invoked when a seek operation has been completed.
-    ANDROID_EXPORT virtual void setOnSeekCompleteListener(OnSeekCompleteListener listener);
+    ANDROID_EXPORT virtual void setOnSeekCompleteListener(OnSeekCompleteListener&& listener);
     // Register a callback to be invoked when a timed text is available for display.
-    ANDROID_EXPORT virtual void setOnTimedTextListener(OnTimedTextListener listener);
+    ANDROID_EXPORT virtual void setOnTimedTextListener(OnTimedTextListener&& listener);
     // Register a callback to be invoked when the video size is known or updated. 
-    ANDROID_EXPORT virtual void setOnVideoSizeChangedListener(OnVideoSizeChangedListener listener);
+    ANDROID_EXPORT virtual void setOnVideoSizeChangedListener(OnVideoSizeChangedListener&& listener);
     // Control whether we should use the attached SurfaceHolder to keep the screen on while video playback is occurring.
     ANDROID_EXPORT virtual void setScreenOnWhilePlaying(bool screenOn);
     // Sets video scaling mode.
@@ -183,22 +187,11 @@ public:
     // Stops playback after playback has been stopped or paused. 
     ANDROID_EXPORT virtual void stop();
 
+    // Sets the Surface to be used as the sink for the video portion of the media. 
+    ANDROID_EXPORT virtual void setSurface(std::passed_ptr<Surface> surface);
+
 private:
-    MediaPlayer();
-
-    void stateChanged(int32_t);
-
-    std::unique_ptr<MediaPlayerPrivate> m_private;
-    int32_t m_state;
-
-    OnBufferingUpdateListener m_bufferingUpdateListener;
-    OnCompletionListener m_completionListener;
-    OnErrorListener m_errorListener;
-    OnInfoListener m_infoListener;
-    OnPreparedListener m_preparedListener;
-    OnSeekCompleteListener m_seekCompleteListener;
-    OnTimedTextListener m_timedTextListener;
-    OnVideoSizeChangedListener m_videoSizeChangedListener;
+    std::shared_ptr<MediaPlayerPrivate> m_private;
 };
 
 } // namespace media

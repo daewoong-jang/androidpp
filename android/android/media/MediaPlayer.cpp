@@ -26,38 +26,57 @@
 #include "MediaPlayer.h"
 
 #include <android/media/MediaPlayerPrivate.h>
+#include <android++/LogHelper.h>
 
 #include <algorithm>
 
 namespace android {
 namespace media {
 
-std::shared_ptr<MediaPlayer> MediaPlayer::create()
-{
-    return std::shared_ptr<MediaPlayer>(new MediaPlayer);
-}
-
-std::shared_ptr<MediaPlayer> MediaPlayer::create(String& uri)
-{
-    return std::shared_ptr<MediaPlayer>(new MediaPlayer);
-}
-
 MediaPlayer::MediaPlayer()
     : m_private(MediaPlayerPrivate::create(*this))
-    , m_state(MediaPlayerPrivate::Idle)
 {
+}
+
+MediaPlayer::MediaPlayer(StringRef url)
+    : m_private(MediaPlayerPrivate::create(*this))
+{
+}
+
+MediaPlayer::MediaPlayer(const MediaPlayer& other)
+    : m_private(other.m_private)
+{
+}
+
+MediaPlayer::MediaPlayer(MediaPlayer&& other)
+    : m_private(std::move(other.m_private))
+{
+}
+
+MediaPlayer& MediaPlayer::operator=(const MediaPlayer& other)
+{
+    m_private = other.m_private;
+    return *this;
+}
+
+MediaPlayer& MediaPlayer::operator=(MediaPlayer&& other)
+{
+    m_private = std::move(other.m_private);
+    return *this;
 }
 
 MediaPlayer::~MediaPlayer()
 {
 }
 
-void MediaPlayer::addTimedTextSource(String& path, String& mimeType)
+void MediaPlayer::addTimedTextSource(StringRef path, StringRef mimeType)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
 void MediaPlayer::deselectTrack(int32_t index)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
 int32_t MediaPlayer::getCurrentPosition()
@@ -72,6 +91,7 @@ int32_t MediaPlayer::getDuration()
 
 int32_t MediaPlayer::getSelectedTrack(int32_t trackType)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
     return 0;
 }
 
@@ -92,46 +112,49 @@ int32_t MediaPlayer::getVideoWidth()
 
 bool MediaPlayer::isLooping()
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
     return false;
 }
 
 bool MediaPlayer::isPlaying()
 {
-    return m_state == MediaPlayerPrivate::Started;
+    return m_private->m_state == MediaPlayerPrivate::Started;
 }
 
 void MediaPlayer::pause()
 {
-    assert(m_state == MediaPlayerPrivate::Started || m_state == MediaPlayerPrivate::Paused || m_state == MediaPlayerPrivate::PlaybackCompleted);
+    assert(m_private->m_state == MediaPlayerPrivate::Started || m_private->m_state == MediaPlayerPrivate::Paused || m_private->m_state == MediaPlayerPrivate::PlaybackCompleted);
 
-    stateChanged(MediaPlayerPrivate::Paused);
+    m_private->stateChanged(MediaPlayerPrivate::Paused);
 }
 
 void MediaPlayer::prepare()
 {
-    // Do NOT use prepare(), since it works synchronously.
-    assert(0);
+    assert(m_private->m_state == MediaPlayerPrivate::Initialized || m_private->m_state == MediaPlayerPrivate::Stopped);
+
+    m_private->stateChanged(MediaPlayerPrivate::Prepare);
 }
 
 void MediaPlayer::prepareAsync()
 {
-    assert(m_state == MediaPlayerPrivate::Initialized || m_state == MediaPlayerPrivate::Stopped);
+    assert(m_private->m_state == MediaPlayerPrivate::Initialized || m_private->m_state == MediaPlayerPrivate::Stopped);
 
-    stateChanged(MediaPlayerPrivate::Preparing);
+    m_private->stateChanged(MediaPlayerPrivate::Preparing);
 }
 
 void MediaPlayer::release()
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
 void MediaPlayer::reset()
 {
-    stateChanged(MediaPlayerPrivate::Idle);
+    m_private->stateChanged(MediaPlayerPrivate::Idle);
 }
 
 void MediaPlayer::seekTo(int32_t msec)
 {
-    assert(m_state == MediaPlayerPrivate::Prepared || m_state == MediaPlayerPrivate::Started || m_state == MediaPlayerPrivate::Paused || m_state == MediaPlayerPrivate::PlaybackCompleted);
+    assert(m_private->m_state == MediaPlayerPrivate::Prepared || m_private->m_state == MediaPlayerPrivate::Started || m_private->m_state == MediaPlayerPrivate::Paused || m_private->m_state == MediaPlayerPrivate::PlaybackCompleted);
 
     msec = std::max(0, std::min(msec, m_private->getDuration()));
     m_private->seekTo(msec);
@@ -139,70 +162,75 @@ void MediaPlayer::seekTo(int32_t msec)
 
 void MediaPlayer::selectTrack(int32_t index)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
-void MediaPlayer::setDataSource(String& path)
+void MediaPlayer::setDataSource(StringRef path)
 {
-    assert(m_state == MediaPlayerPrivate::Idle);
+    assert(m_private->m_state == MediaPlayerPrivate::Idle);
 
     m_private->setDataSource(path);
-    stateChanged(MediaPlayerPrivate::Initialized);
+    m_private->stateChanged(MediaPlayerPrivate::Initialized);
 }
 
-void MediaPlayer::setDataSource(Context& context, String& uri, const std::map<String, String>& headers)
+void MediaPlayer::setDataSource(Context& context, StringRef uri, const std::map<String, String>& headers)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
 void MediaPlayer::setLooping(bool looping)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
-void MediaPlayer::setOnBufferingUpdateListener(OnBufferingUpdateListener listener)
+void MediaPlayer::setOnBufferingUpdateListener(OnBufferingUpdateListener&& listener)
 {
-    m_bufferingUpdateListener = std::move(listener);
+    m_private->m_bufferingUpdateListener = std::move(listener);
 }
 
-void MediaPlayer::setOnCompletionListener(OnCompletionListener listener)
+void MediaPlayer::setOnCompletionListener(OnCompletionListener&& listener)
 {
-    m_completionListener = std::move(listener);
+    m_private->m_completionListener = std::move(listener);
 }
 
-void MediaPlayer::setOnErrorListener(OnErrorListener listener)
+void MediaPlayer::setOnErrorListener(OnErrorListener&& listener)
 {
-    m_errorListener = std::move(listener);
+    m_private->m_errorListener = std::move(listener);
 }
     
-void MediaPlayer::setOnInfoListener(OnInfoListener listener)
+void MediaPlayer::setOnInfoListener(OnInfoListener&& listener)
 {
-    m_infoListener = std::move(listener);
+    m_private->m_infoListener = std::move(listener);
 }
 
-void MediaPlayer::setOnPreparedListener(OnPreparedListener listener)
+void MediaPlayer::setOnPreparedListener(OnPreparedListener&& listener)
 {
-    m_preparedListener = std::move(listener);
+    m_private->m_preparedListener = std::move(listener);
 }
 
-void MediaPlayer::setOnSeekCompleteListener(OnSeekCompleteListener listener)
+void MediaPlayer::setOnSeekCompleteListener(OnSeekCompleteListener&& listener)
 {
-    m_seekCompleteListener = std::move(listener);
+    m_private->m_seekCompleteListener = std::move(listener);
 }
 
-void MediaPlayer::setOnTimedTextListener(OnTimedTextListener listener)
+void MediaPlayer::setOnTimedTextListener(OnTimedTextListener&& listener)
 {
-    m_timedTextListener = std::move(listener);
+    m_private->m_timedTextListener = std::move(listener);
 }
 
-void MediaPlayer::setOnVideoSizeChangedListener(OnVideoSizeChangedListener listener)
+void MediaPlayer::setOnVideoSizeChangedListener(OnVideoSizeChangedListener&& listener)
 {
-    m_videoSizeChangedListener = std::move(listener);
+    m_private->m_videoSizeChangedListener = std::move(listener);
 }
 
 void MediaPlayer::setScreenOnWhilePlaying(bool screenOn)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
 void MediaPlayer::setVideoScalingMode(int32_t mode)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
 void MediaPlayer::setVolume(float leftVolume, float rightVolume)
@@ -212,50 +240,27 @@ void MediaPlayer::setVolume(float leftVolume, float rightVolume)
 
 void MediaPlayer::setWakeMode(int32_t mode)
 {
+    LOGD("NOT IMPLEMENTED: %s", __FUNCTION__);
 }
 
 void MediaPlayer::start()
 {
-    assert(m_state == MediaPlayerPrivate::Prepared || m_state == MediaPlayerPrivate::Started || m_state == MediaPlayerPrivate::Paused || m_state == MediaPlayerPrivate::PlaybackCompleted);
+    assert(m_private->m_state == MediaPlayerPrivate::Prepared || m_private->m_state == MediaPlayerPrivate::Started || m_private->m_state == MediaPlayerPrivate::Paused || m_private->m_state == MediaPlayerPrivate::PlaybackCompleted);
 
-    stateChanged(MediaPlayerPrivate::Started);
+    m_private->stateChanged(MediaPlayerPrivate::Started);
 }
 
 void MediaPlayer::stop()
 {
-    assert(m_state == MediaPlayerPrivate::Prepared || m_state == MediaPlayerPrivate::Started || m_state == MediaPlayerPrivate::Stopped || m_state == MediaPlayerPrivate::Paused || m_state == MediaPlayerPrivate::PlaybackCompleted);
+    assert(m_private->m_state == MediaPlayerPrivate::Prepared || m_private->m_state == MediaPlayerPrivate::Started || m_private->m_state == MediaPlayerPrivate::Stopped || m_private->m_state == MediaPlayerPrivate::Paused || m_private->m_state == MediaPlayerPrivate::PlaybackCompleted);
 
-    stateChanged(MediaPlayerPrivate::Stopped);
+    m_private->stateChanged(MediaPlayerPrivate::Stopped);
 }
 
-static MediaPlayerPrivate::State toState(int32_t state)
+void MediaPlayer::setSurface(std::passed_ptr<Surface> surface)
 {
-    switch (state) {
-    case MediaPlayerPrivate::Unknown:
-    case MediaPlayerPrivate::Idle:
-    case MediaPlayerPrivate::Initialized:
-    case MediaPlayerPrivate::Preparing:
-    case MediaPlayerPrivate::Prepared:
-    case MediaPlayerPrivate::Started:
-    case MediaPlayerPrivate::Paused:
-    case MediaPlayerPrivate::Stopped:
-    case MediaPlayerPrivate::PlaybackCompleted:
-    case MediaPlayerPrivate::End:
-    case MediaPlayerPrivate::Error:
-        return static_cast<MediaPlayerPrivate::State>(state);
-    default:
-        assert(false);
-        break;
-    };
-    return MediaPlayerPrivate::Error;
-}
-
-void MediaPlayer::stateChanged(int32_t newState)
-{
-    MediaPlayerPrivate::State oldState = toState(m_state);
-    m_state = newState;
-
-    m_private->stateChanged(oldState, toState(newState));
+    m_private->m_surface = surface;
+    m_private->surfaceChanged();
 }
 
 } // namespace media

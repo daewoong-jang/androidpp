@@ -32,6 +32,7 @@
 #include <android/os/Message.h>
 #include <android/os/ParcelFileDescriptor.h>
 #include <android/os/ParcelablePrivate.h>
+#include <android/view/Surface.h>
 
 namespace android {
 namespace content {
@@ -46,6 +47,7 @@ Context::Context()
     ParcelableCreator::creator<Intent>();
     ParcelableCreator::creator<Message>();
     ParcelableCreator::creator<ParcelFileDescriptor>();
+    ParcelableCreator::creator<Surface>();
 }
 
 Context::~Context()
