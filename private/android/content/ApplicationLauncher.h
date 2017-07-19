@@ -52,6 +52,8 @@ public:
 
     static ApplicationLauncher& get();
 
+    std::shared_ptr<Binder> remote(int64_t pid);
+
     bool bindService(Intent& service, std::passed_ptr<ServiceConnection> conn, int32_t flags);
     void unbindService(std::passed_ptr<ServiceConnection> conn);
 

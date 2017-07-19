@@ -193,7 +193,7 @@ int32_t Intent::describeContents()
 
 void Intent::writeToParcel(Parcel& dest, int32_t flags) const
 {
-    dest << ParcelableCreator::creator<Intent>().binaryName;
+    ParcelableCreator::writeToParcel(*this, dest);
     m_private->m_componentName.writeToParcel(dest, flags);
     m_private->m_extras.writeToParcel(dest, flags);
     m_private->m_privateExtras.writeToParcel(dest, flags);

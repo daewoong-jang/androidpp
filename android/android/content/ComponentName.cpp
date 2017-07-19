@@ -132,7 +132,7 @@ int32_t ComponentName::describeContents()
 
 void ComponentName::writeToParcel(Parcel& dest, int32_t flags) const
 {
-    dest << ParcelableCreator::creator<ComponentName>().binaryName;
+    ParcelableCreator::writeToParcel(*this, dest);
     dest << m_packageName;
     dest << m_className;
 }

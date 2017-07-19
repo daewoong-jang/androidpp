@@ -118,7 +118,7 @@ int32_t Surface::describeContents()
 
 void Surface::writeToParcel(Parcel& dest, int32_t flags) const
 {
-    dest << ParcelableCreator::creator<Surface>().binaryName;
+    ParcelableCreator::writeToParcel(*this, dest);
     m_private->writeToParcel(dest, flags);
 }
 

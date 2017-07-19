@@ -11,6 +11,7 @@ set(ANDROIDPP_HEADERS
     IdentifierErasure.h
     KeywordMacros.h
     LogHelper.h
+    NeverDestroyed.h
     Noncopyable.h
     PointerTypes.h
     StringConversion.h

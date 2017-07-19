@@ -158,6 +158,8 @@ void LocalBinder::onTimer()
 
 void LocalBinder::onTransaction(int32_t code, Parcel& data, intptr_t replyTo, int32_t flags)
 {
+    assert(!m_reply || code == Binder::REPLY_TRANSACTION);
+
     if (replyTo) {
         Parcel reply;
         m_client->onTransaction(code, data, &reply, 0);

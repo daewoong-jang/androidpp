@@ -225,7 +225,7 @@ int32_t Bundle::describeContents()
 
 void Bundle::writeToParcel(Parcel& dest, int32_t flags) const
 {
-    dest << ParcelableCreator::creator<Bundle>().binaryName;
+    ParcelableCreator::writeToParcel(*this, dest);
     m_private->writeToParcel(dest, flags);
 }
 

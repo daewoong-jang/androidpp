@@ -36,11 +36,10 @@ class Binder;
 class ParcelPrivate {
 public:
     ParcelPrivate(Parcel&);
-    ParcelPrivate(Parcel&, const int8_t* dataBegin, const int8_t* dataEnd);
+    static void initializeWithCopy(Parcel&, int8_t* data, size_t length);
 
     static ParcelPrivate& getPrivate(Parcel&);
     static void setPrivate(Parcel&, std::unique_ptr<ParcelPrivate>&&);
-    static void initializeWithCopy(Parcel&, int8_t* data, size_t length);
 
     int32_t size();
     int8_t* data();
@@ -53,7 +52,6 @@ public:
     int8_t* readArray(size_t& length, size_t alignment);
     void writeArray(const void* in, size_t length, size_t alignment);
 
-    bool hasOrigin();
     void setOrigin(std::passed_ptr<Binder> binder);
     std::shared_ptr<Binder> getOrigin();
 

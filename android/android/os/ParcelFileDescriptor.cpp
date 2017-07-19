@@ -85,7 +85,7 @@ int32_t ParcelFileDescriptor::describeContents()
 
 void ParcelFileDescriptor::writeToParcel(Parcel& dest, int32_t flags) const
 {
-    dest << ParcelableCreator::creator<ParcelFileDescriptor>().binaryName;
+    ParcelableCreator::writeToParcel(*this, dest);
     PlatformFileDescriptor::encode(dest, m_fd, m_handle, flags);
 }
 

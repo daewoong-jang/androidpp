@@ -35,11 +35,11 @@ ParcelPrivate::ParcelPrivate(Parcel& parcel)
 {
 }
 
-ParcelPrivate::ParcelPrivate(Parcel& parcel, const int8_t* dataBegin, const int8_t* dataEnd)
-    : m_parcel(parcel)
-    , m_buffer(dataBegin, dataEnd)
+void ParcelPrivate::initializeWithCopy(Parcel& parcel, int8_t* data, size_t length)
 {
-    reset();
+    std::vector<int8_t>& buffer = ParcelPrivate::getPrivate(parcel).m_buffer;
+    buffer.insert(buffer.end(), data, data + length);
+    ParcelPrivate::getPrivate(parcel).reset();
 }
 
 ParcelPrivate& ParcelPrivate::getPrivate(Parcel& parcel)
@@ -50,13 +50,6 @@ ParcelPrivate& ParcelPrivate::getPrivate(Parcel& parcel)
 void ParcelPrivate::setPrivate(Parcel& parcel, std::unique_ptr<ParcelPrivate>&& parcelPrivate)
 {
     parcel.m_private = std::move(parcelPrivate);
-}
-
-void ParcelPrivate::initializeWithCopy(Parcel& parcel, int8_t* data, size_t length)
-{
-    std::vector<int8_t>& buffer = ParcelPrivate::getPrivate(parcel).m_buffer;
-    buffer.insert(buffer.end(), data, data + length);
-    ParcelPrivate::getPrivate(parcel).reset();
 }
 
 int32_t ParcelPrivate::size()
@@ -104,11 +97,6 @@ void ParcelPrivate::writeArray(const void* in, size_t length, size_t alignment)
 {
     write(&length, sizeof(length), sizeof(length));
     write(in, length * alignment, alignment);
-}
-
-bool ParcelPrivate::hasOrigin()
-{
-    return !!m_origin;
 }
 
 void ParcelPrivate::setOrigin(std::passed_ptr<Binder> binder)

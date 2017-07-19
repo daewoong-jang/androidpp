@@ -38,6 +38,10 @@ template<typename T> shared_ptr<T> ref_ptr(T& ptr) { return shared_ptr<T>(&ptr, 
 template<typename T>
 class lazy_ptr {
 public:
+    lazy_ptr()
+        : m_ctor([] { return new T; })
+    {
+    }
     template<typename F>
     lazy_ptr(F&& ctor)
         : m_ctor(std::move(ctor))

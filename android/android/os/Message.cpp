@@ -242,7 +242,7 @@ int32_t Message::describeContents()
 
 void Message::writeToParcel(Parcel& dest, int32_t flags) const
 {
-    dest << ParcelableCreator::creator<Message>().binaryName;
+    ParcelableCreator::writeToParcel(*this, dest);
     dest << what;
     dest << arg1;
     dest << arg2;

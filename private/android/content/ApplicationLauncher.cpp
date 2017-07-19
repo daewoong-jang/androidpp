@@ -78,6 +78,15 @@ ApplicationLauncher::Application::Application(StringRef component, Intent& inten
 {
 }
 
+std::shared_ptr<Binder> ApplicationLauncher::remote(int64_t pid)
+{
+    for (auto& application : m_applications) {
+        if (application.second->pid == pid)
+            return application.second->peer;
+    }
+    return nullptr;
+}
+
 bool ApplicationLauncher::Application::launch()
 {
     if (phandle)

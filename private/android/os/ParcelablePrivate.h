@@ -52,11 +52,16 @@ public:
         return static_cast<ParcelableCreator&>(*T::CREATOR);
     }
 
+    template<typename T> static void writeToParcel(T&, Parcel& dest)
+    {
+        dest << ParcelableCreator::creator<T>().binaryName;
+    }
+
     const String binaryName;
 };
 
 } // namespace os
 } // namespace android
 
-using ParcelablePrivate = android::os::ParcelablePrivate;
 using ParcelableCreator = android::os::ParcelableCreator;
+using ParcelablePrivate = android::os::ParcelablePrivate;
