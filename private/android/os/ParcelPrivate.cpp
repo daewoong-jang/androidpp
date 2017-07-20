@@ -35,6 +35,12 @@ ParcelPrivate::ParcelPrivate(Parcel& parcel)
 {
 }
 
+ParcelPrivate::~ParcelPrivate()
+{
+    if (m_finalizer.target<void ()>())
+        m_finalizer();
+}
+
 void ParcelPrivate::initializeWithCopy(Parcel& parcel, int8_t* data, size_t length)
 {
     std::vector<int8_t>& buffer = ParcelPrivate::getPrivate(parcel).m_buffer;
@@ -107,6 +113,11 @@ void ParcelPrivate::setOrigin(std::passed_ptr<Binder> binder)
 std::shared_ptr<Binder> ParcelPrivate::getOrigin()
 {
     return m_origin;
+}
+
+void ParcelPrivate::setFinalizer(std::function<void ()>&& finalizer)
+{
+    m_finalizer = std::move(finalizer);
 }
 
 static inline size_t alignLength(size_t length, size_t alignment)

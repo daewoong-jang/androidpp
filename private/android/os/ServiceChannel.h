@@ -25,50 +25,24 @@
 
 #pragma once
 
-#include <android/os/Parcel.h>
-#include <vector>
+#include <java/lang.h>
+#include <unordered_set>
 
 namespace android {
 namespace os {
 
-class Binder;
+class Bundle;
+class ServiceObject;
 
-class ParcelPrivate {
+class ServiceChannel {
 public:
-    ParcelPrivate(Parcel&);
-    ~ParcelPrivate();
-    static void initializeWithCopy(Parcel&, int8_t* data, size_t length);
+    virtual ~ServiceChannel() = default;
 
-    static ParcelPrivate& getPrivate(Parcel&);
-    static void setPrivate(Parcel&, std::unique_ptr<ParcelPrivate>&&);
-
-    int32_t size();
-    int8_t* data();
-
-    void reset();
-
-    void read(void* out, size_t length, size_t alignment);
-    void write(const void* in, size_t length, size_t alignment);
-
-    int8_t* readArray(size_t& length, size_t alignment);
-    void writeArray(const void* in, size_t length, size_t alignment);
-
-    void setOrigin(std::passed_ptr<Binder> binder);
-    std::shared_ptr<Binder> getOrigin();
-
-    void setFinalizer(std::function<void ()>&&);
-
-private:
-    int8_t* grow(size_t length, size_t alignment);
-    int8_t* move(size_t length, size_t alignment);
-
-    void throwException();
-
-    Parcel& m_parcel;
-    int8_t* m_pointer { nullptr };
-    std::vector<int8_t> m_buffer;
-    std::shared_ptr<Binder> m_origin;
-    std::function<void ()> m_finalizer;
+    virtual void import(int32_t) = 0;
+    virtual void ref(int32_t) = 0;
+    virtual void deref(int32_t) = 0;
+    virtual bool update(int32_t, Bundle&) = 0;
+    virtual bool notify(int32_t, int64_t, int64_t) = 0;
 };
 
 } // namespace os

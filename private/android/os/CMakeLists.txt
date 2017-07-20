@@ -6,6 +6,7 @@ set(OS_SOURCES
     MessageTarget.cpp
     ParcelPrivate.cpp
     ParcelablePrivate.cpp
+    ServiceObject.cpp
 )
 
 set(OS_HEADERS
@@ -17,17 +18,22 @@ set(OS_HEADERS
     ParcelPrivate.h
     ParcelablePrivate.h
     PlatformFileDescriptor.h
+    ServiceChannel.h
+    ServiceMessageClient.h
+    ServiceMessageHost.h
+    ServiceObject.h
+    ServiceObjectRef.h
 )
 
 if (WIN32)
     list(APPEND OS_SOURCES
-        win/BinderWin.cpp
+        win/BinderProviderWin.cpp
         win/LooperWin.cpp
         win/PlatformFileDescriptorWin.cpp
     )
 
     list(APPEND OS_HEADERS
-        win/BinderWin.h
+        win/BinderProviderWin.h
     )
 endif ()
 
