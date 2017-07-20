@@ -3,9 +3,11 @@ set(OS_SOURCES
     BinderProvider.cpp
     BundlePrivate.cpp
     HandlerProvider.cpp
+    MemoryFilePrivate.cpp
     MessageTarget.cpp
     ParcelPrivate.cpp
     ParcelablePrivate.cpp
+    PlatformHandle.cpp
     ServiceObject.cpp
 )
 
@@ -14,10 +16,12 @@ set(OS_HEADERS
     BinderProvider.h
     BundlePrivate.h
     HandlerProvider.h
+    MemoryFilePrivate.h
     MessageTarget.h
     ParcelPrivate.h
     ParcelablePrivate.h
     PlatformFileDescriptor.h
+    PlatformHandle.h
     ServiceChannel.h
     ServiceMessageClient.h
     ServiceMessageHost.h
@@ -29,7 +33,9 @@ if (WIN32)
     list(APPEND OS_SOURCES
         win/BinderProviderWin.cpp
         win/LooperWin.cpp
+        win/MemoryFilePrivateWin.cpp
         win/PlatformFileDescriptorWin.cpp
+        win/PlatformHandleWin.cpp
     )
 
     list(APPEND OS_HEADERS

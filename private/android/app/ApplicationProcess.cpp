@@ -25,6 +25,7 @@
 
 #include "ApplicationProcess.h"
 
+#include <android/os/MemoryFilePrivate.h>
 #include <android/view/SurfacePrivate.h>
 
 namespace android {
@@ -70,6 +71,7 @@ bool ApplicationProcess::initialize(intptr_t root, std::unordered_map<String, St
 
     m_root = root ? Binder::adopt(root) : m_self;
 
+    os::MemoryFilePrivate::initService();
     view::SurfacePrivate::initService();
 
     return platformInitialize(parameters);
