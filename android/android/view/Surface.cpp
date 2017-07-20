@@ -26,7 +26,7 @@
 #include "Surface.h"
 
 #include <android/os/ParcelablePrivate.h>
-#include <android/os/ServiceObjectHost.h>
+#include <android/os/ServiceMessageHost.h>
 #include <android/view/SurfacePrivate.h>
 #include <android++/LogHelper.h>
 

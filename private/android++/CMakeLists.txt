@@ -52,6 +52,7 @@ if (NOT ANDROID)
         $<TARGET_OBJECTS:java.lang>
         $<TARGET_OBJECTS:private.android.app>
         $<TARGET_OBJECTS:private.android.content>
+        $<TARGET_OBJECTS:private.android.graphics>
         $<TARGET_OBJECTS:private.android.media>
         $<TARGET_OBJECTS:private.android.opengl>
         $<TARGET_OBJECTS:private.android.os>

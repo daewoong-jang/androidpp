@@ -1,6 +1,7 @@
 set(VIEW_SOURCES
     KeyEventPrivate.cpp
     MotionEventPrivate.cpp
+    SurfacePrivate.cpp
     ViewPrivate.cpp
 )
 
@@ -9,6 +10,7 @@ set(VIEW_HEADERS
     Cursor.h
     KeyEventPrivate.h
     MotionEventPrivate.h
+    SurfacePrivate.h
     ViewPrivate.h
 )
 
@@ -16,6 +18,7 @@ if (WIN32)
     list(APPEND VIEW_SOURCES
         win/CursorWin.cpp
         win/MenuWin.cpp
+        win/SurfacePrivateWin.cpp
     )
 
     list(APPEND VIEW_HEADERS

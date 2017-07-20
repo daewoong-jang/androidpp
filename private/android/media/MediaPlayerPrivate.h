@@ -25,8 +25,7 @@
 
 #pragma once
 
-#include <java/lang.h>
-#include <android++/Functional.h>
+#include <android/media/MediaPlayer.h>
 
 namespace android {
 namespace media {
@@ -34,17 +33,16 @@ namespace media {
 class MediaPlayerPrivate : public Object {
     friend class MediaPlayer;
 public:  
-    static std::unique_ptr<MediaPlayerPrivate> create(MediaPlayer&);
+    static std::shared_ptr<MediaPlayerPrivate> create(MediaPlayer&);
     virtual ~MediaPlayerPrivate() = default;
 
-    ANDROID_EXPORT static void setFactory(MediaPlayerPrivate* (*)(MediaPlayer&));
-
-    ANDROID_EXPORT static MediaPlayerPrivate& getPrivate(MediaPlayer&);
+    static MediaPlayerPrivate& getPrivate(MediaPlayer&);
 
     enum State {
         Unknown,
         Idle,
         Initialized,
+        Prepare,
         Preparing,
         Prepared,
         Started,
@@ -68,7 +66,7 @@ public:
     // Called by MediaPlayer whenever its state is being changed.
     virtual void stateChanged(State oldState, State newState) = 0;
 
-    virtual void setOnFrameAvailableListener(std::function<void ()> l) { m_frameAvailableListener = std::move(l); }
+    virtual void setOnFrameAvailableListener(std::function<void ()>&& l) { m_frameAvailableListener = std::move(l); }
 
 protected:
     MediaPlayerPrivate(MediaPlayer& mp)
@@ -76,16 +74,33 @@ protected:
     {
     }
 
-    ANDROID_EXPORT void callOnBufferingUpdateListener(int32_t percent);
-    ANDROID_EXPORT void callOnCompletionListener();
-    ANDROID_EXPORT void callOnErrorListener(int32_t error);
-    ANDROID_EXPORT void callOnInfoListener();
-    ANDROID_EXPORT void callOnPreparedListener();
-    ANDROID_EXPORT void callOnSeekCompleteListener();
-    ANDROID_EXPORT void callOnTimedTextListener();
-    ANDROID_EXPORT void callOnVideoSizeChangedListener(int32_t width, int32_t height);
+    void stateChanged(int32_t);
+    void surfaceChanged();
 
-    media::MediaPlayer& m_player;
+    void notifyOnBufferingUpdate(int32_t percent);
+    void notifyOnCompletion();
+    void notifyOnError(int32_t error);
+    void notifyOnInfo();
+    void notifyOnPrepared();
+    void notifyOnSeekComplete();
+    void notifyOnTimedText();
+    void notifyOnVideoSizeChanged(int32_t width, int32_t height);
+
+    MediaPlayer& m_player;
+    int32_t m_state { Idle };
+    int32_t m_videoWidth { 0 };
+    int32_t m_videoHeight { 0 };
+
+    MediaPlayer::OnBufferingUpdateListener m_bufferingUpdateListener;
+    MediaPlayer::OnCompletionListener m_completionListener;
+    MediaPlayer::OnErrorListener m_errorListener;
+    MediaPlayer::OnInfoListener m_infoListener;
+    MediaPlayer::OnPreparedListener m_preparedListener;
+    MediaPlayer::OnSeekCompleteListener m_seekCompleteListener;
+    MediaPlayer::OnTimedTextListener m_timedTextListener;
+    MediaPlayer::OnVideoSizeChangedListener m_videoSizeChangedListener;
+
+    std::shared_ptr<Surface> m_surface;
     std::function<void ()> m_frameAvailableListener;
 };
 

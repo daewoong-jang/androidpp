@@ -25,25 +25,38 @@
 
 #include "MediaPlayerPrivate.h"
 
-#include <android/media/MediaPlayer.h>
 #include <android/media/mock/MediaPlayerPrivateMock.h>
+#include <android/view/SurfacePrivate.h>
 
 namespace android {
 namespace media {
 
-static MediaPlayerPrivate* (*s_factory)(MediaPlayer&) = 0;
-
-std::unique_ptr<MediaPlayerPrivate> MediaPlayerPrivate::create(MediaPlayer& mp)
+static MediaPlayerPrivate::State toState(int32_t state)
 {
-    if (s_factory)
-        return std::unique_ptr<MediaPlayerPrivate>(s_factory(mp));
-
-    return std::make_unique<MediaPlayerPrivateMock>(mp);
+    switch (state) {
+    case MediaPlayerPrivate::Unknown:
+    case MediaPlayerPrivate::Idle:
+    case MediaPlayerPrivate::Initialized:
+    case MediaPlayerPrivate::Prepare:
+    case MediaPlayerPrivate::Preparing:
+    case MediaPlayerPrivate::Prepared:
+    case MediaPlayerPrivate::Started:
+    case MediaPlayerPrivate::Paused:
+    case MediaPlayerPrivate::Stopped:
+    case MediaPlayerPrivate::PlaybackCompleted:
+    case MediaPlayerPrivate::End:
+    case MediaPlayerPrivate::Error:
+        return static_cast<MediaPlayerPrivate::State>(state);
+    default:
+        assert(false);
+        break;
+    };
+    return MediaPlayerPrivate::Error;
 }
 
-void MediaPlayerPrivate::setFactory(MediaPlayerPrivate* (*factory)(MediaPlayer&))
+std::shared_ptr<MediaPlayerPrivate> MediaPlayerPrivate::create(MediaPlayer& mp)
 {
-    s_factory = factory;
+    return std::make_shared<MediaPlayerPrivateMock>(mp);
 }
 
 MediaPlayerPrivate& MediaPlayerPrivate::getPrivate(MediaPlayer& mp)
@@ -51,47 +64,86 @@ MediaPlayerPrivate& MediaPlayerPrivate::getPrivate(MediaPlayer& mp)
     return *mp.m_private;
 }
 
-void MediaPlayerPrivate::callOnBufferingUpdateListener(int32_t percent)
+void MediaPlayerPrivate::stateChanged(int32_t newState)
 {
-    m_player.m_bufferingUpdateListener(percent);
+    MediaPlayerPrivate::State oldState = toState(m_state);
+    m_state = newState;
+
+    stateChanged(oldState, toState(newState));
 }
 
-void MediaPlayerPrivate::callOnCompletionListener()
+void MediaPlayerPrivate::surfaceChanged()
 {
-    m_player.stateChanged(PlaybackCompleted);
-    m_player.m_completionListener();
+    if (!m_surface)
+        return;
+
+    if (m_videoWidth == 0 || m_videoHeight == 0)
+        return;
+
+    view::SurfacePrivate& surface = view::SurfacePrivate::getPrivate(*m_surface);
+    surface.resize(*m_surface, m_videoWidth, m_videoHeight);
 }
 
-void MediaPlayerPrivate::callOnErrorListener(int32_t error)
+void MediaPlayerPrivate::notifyOnBufferingUpdate(int32_t percent)
 {
-    m_player.stateChanged(Error);
-    m_player.m_errorListener(error);
+    if (m_bufferingUpdateListener)
+        m_bufferingUpdateListener(percent);
 }
 
-void MediaPlayerPrivate::callOnInfoListener()
+void MediaPlayerPrivate::notifyOnCompletion()
 {
-    m_player.m_infoListener();
+    stateChanged(PlaybackCompleted);
+
+    if (m_completionListener)
+        m_completionListener();
 }
 
-void MediaPlayerPrivate::callOnPreparedListener()
+void MediaPlayerPrivate::notifyOnError(int32_t error)
 {
-    m_player.stateChanged(Prepared);
-    m_player.m_preparedListener();
+    stateChanged(Error);
+
+    if (m_errorListener)
+        m_errorListener(error);
 }
 
-void MediaPlayerPrivate::callOnSeekCompleteListener()
+void MediaPlayerPrivate::notifyOnInfo()
 {
-    m_player.m_seekCompleteListener();
+    if (m_infoListener)
+        m_infoListener();
 }
 
-void MediaPlayerPrivate::callOnTimedTextListener()
+void MediaPlayerPrivate::notifyOnPrepared()
 {
-    m_player.m_timedTextListener();
+    int32_t oldState = m_state;
+    stateChanged(Prepared);
+    if (oldState == Preparing && m_preparedListener)
+        m_preparedListener();
 }
 
-void MediaPlayerPrivate::callOnVideoSizeChangedListener(int32_t width, int32_t height)
+void MediaPlayerPrivate::notifyOnSeekComplete()
 {
-    m_player.m_videoSizeChangedListener(width, height);
+    if (m_seekCompleteListener)
+        m_seekCompleteListener();
+}
+
+void MediaPlayerPrivate::notifyOnTimedText()
+{
+    if (m_timedTextListener)
+        m_timedTextListener();
+}
+
+void MediaPlayerPrivate::notifyOnVideoSizeChanged(int32_t width, int32_t height)
+{
+    if (width == m_videoWidth && height == m_videoHeight)
+        return;
+
+    m_videoWidth = width;
+    m_videoHeight = height;
+
+    surfaceChanged();
+
+    if (m_videoSizeChangedListener)
+        m_videoSizeChangedListener(width, height);
 }
 
 } // namespace media

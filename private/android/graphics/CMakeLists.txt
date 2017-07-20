@@ -1,15 +1,9 @@
 set(GRAPHICS_SOURCES
-    Bitmap.cpp
-    SurfaceTexture.cpp
+    SurfaceTexturePrivate.cpp
 )
 
 set(GRAPHICS_HEADERS
-    Bitmap.h
-    Point.h
-    PointF.h
-    Rect.h
-    RectF.h
-    SurfaceTexture.h
+    SurfaceTexturePrivate.h
 )
 
 include_directories(
@@ -21,4 +15,4 @@ include_directories(
     "${CMAKE_BINARY_DIR}"
 )
 
-add_library(android.graphics OBJECT ${GRAPHICS_HEADERS} ${GRAPHICS_SOURCES})
+add_library(private.android.graphics OBJECT ${GRAPHICS_HEADERS} ${GRAPHICS_SOURCES})

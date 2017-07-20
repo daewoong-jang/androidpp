@@ -28,6 +28,7 @@
 #include <android/app/ApplicationProcess.h>
 
 #include <algorithm>
+#include <unistd.h>
 
 namespace android {
 namespace media {
@@ -97,11 +98,15 @@ void MediaPlayerPrivateMock::stateChanged(State oldState, State newState)
     case Initialized:
         assert(oldState == Idle);
         break;
+    case Prepare:
+        sleep((mediaPrepareLatency + mediaBufferingLatency) / 1000);
+        onPrepared();
+        break;
     case Preparing:
         post([=] { onPrepared(); }, mediaPrepareLatency);
         break;
     case Prepared:
-        assert(oldState == Preparing);
+        assert(oldState == Prepare || oldState == Preparing);
         break;
     case Started:
         onUpdatePlayback();
@@ -159,7 +164,7 @@ void MediaPlayerPrivateMock::reset()
 void MediaPlayerPrivateMock::onBufferingUpdate(int32_t percent)
 {
     m_buffering = std::max(0, std::min(percent, 100));
-    callOnBufferingUpdateListener(m_buffering);
+    notifyOnBufferingUpdate(m_buffering);
     if (m_buffering < 100)
         post([=] { onBufferingUpdate(m_buffering + mediaBufferingIncrement); }, mediaBufferingLatency);
 }
@@ -170,12 +175,13 @@ void MediaPlayerPrivateMock::onCompletion()
     assert(m_currentTime > m_duration);
 
     m_currentTime = m_duration;
-    callOnCompletionListener();
+    notifyOnCompletion();
 }
 
 void MediaPlayerPrivateMock::onFrameAvailable()
 {
-    m_frameAvailableListener();
+    if (m_frameAvailableListener)
+        m_frameAvailableListener();
     if (m_state == Started)
         post([=] { onFrameAvailable(); }, mediaFrameAvailableLatency);
 }
@@ -183,7 +189,7 @@ void MediaPlayerPrivateMock::onFrameAvailable()
 void MediaPlayerPrivateMock::onPrepared()
 {
     m_duration = mediaDuration;
-    callOnPreparedListener();
+    notifyOnPrepared();
     onBufferingUpdate(mediaInitialBuffering);
     onVideoSizeChanged();
 }
@@ -192,12 +198,12 @@ void MediaPlayerPrivateMock::onSeekComplete(int32_t msec)
 {
     m_currentTime = msec;
     m_currentPosition = 0;
-    callOnSeekCompleteListener();
+    notifyOnSeekComplete();
 }
 
 void MediaPlayerPrivateMock::onVideoSizeChanged()
 {
-    callOnVideoSizeChangedListener(mediaVideoWidth, mediaVideoHeight);
+    notifyOnVideoSizeChanged(mediaVideoWidth, mediaVideoHeight);
 }
 
 void MediaPlayerPrivateMock::onUpdatePlayback()
