@@ -39,10 +39,9 @@ class ServiceMessageClient : public MessageClientBase<T>, public ServiceChannel 
 public:
     static const int32_t CREATE_OBJECT = E(1);
     static const int32_t IMPORT_OBJECT = E(2);
-    static const int32_t SECURE_OBJECT = E(3);
-    static const int32_t UPDATE_OBJECT = E(4);
-    static const int32_t NOTIFY_OBJECT = E(5);
-    static const int32_t REMOVE_OBJECT = E(6);
+    static const int32_t UPDATE_OBJECT = E(3);
+    static const int32_t NOTIFY_OBJECT = E(4);
+    static const int32_t REMOVE_OBJECT = E(5);
 
     ServiceMessageClient();
     virtual ~ServiceMessageClient();
@@ -53,10 +52,9 @@ public:
 private:
     // ServiceChannel
     virtual void import(int32_t) override;
-    virtual void ref(int32_t) override;
-    virtual void deref(int32_t) override;
     virtual bool update(int32_t, Bundle&) override;
     virtual bool notify(int32_t, int64_t, int64_t) override;
+    virtual void remove(int32_t) override;
 
     // ApplicationProcess:MessageClient
     virtual void onTimer() override;
@@ -90,15 +88,14 @@ std::shared_ptr<T> ServiceMessageClient<T>::import(Parcel& data)
 {
     int32_t objectUid;
     data >> objectUid;
-
-    ref(objectUid);
+    if (objectUid == 0)
+        return nullptr;
 
     auto object = ServiceObject::get(objectUid);
-    if (object)
-        return std::static_pointer_cast<T>(object);
-
-    object = std::make_shared<T>(*this);
-    object->readFromParcel(data);
+    if (!object) {
+        object = std::make_shared<T>(*this);
+        object->m_objectUid = objectUid;
+    }
     return std::static_pointer_cast<T>(object);
 }
 
@@ -109,28 +106,12 @@ void ServiceMessageClient<T>::import(int32_t objectUid)
     parcel << objectUid;
     parcel << System::getProcessId();
 
-    if (!ApplicationProcess::current().root()->transact(IMPORT_OBJECT, parcel, &parcel, 0))
+    Parcel reply;
+    if (!ApplicationProcess::current().root()->transact(IMPORT_OBJECT, parcel, &reply, 0))
         LOGA("Couldn't transact with service host");
-}
 
-template<typename T>
-void ServiceMessageClient<T>::ref(int32_t objectUid)
-{
-    Parcel parcel;
-    parcel << objectUid;
-
-    if (!ApplicationProcess::current().root()->transact(SECURE_OBJECT, parcel, &parcel, 0))
-        LOGA("Couldn't transact with service host");
-}
-
-template<typename T>
-void ServiceMessageClient<T>::deref(int32_t objectUid)
-{
-    Parcel parcel;
-    parcel << objectUid;
-
-    if (!ApplicationProcess::current().root()->transact(REMOVE_OBJECT, parcel, &parcel, 0))
-        LOGA("Couldn't transact with service host");
+    auto object = ServiceObject::get(objectUid);
+    object->readFromParcel(reply);
 }
 
 template<typename T>
@@ -156,6 +137,17 @@ bool ServiceMessageClient<T>::notify(int32_t objectUid, int64_t senderPid, int64
 {
     assert(false);
     return false;
+}
+
+template<typename T>
+void ServiceMessageClient<T>::remove(int32_t objectUid)
+{
+    Parcel parcel;
+    parcel << objectUid;
+    parcel << System::getProcessId();
+
+    if (!ApplicationProcess::current().root()->transact(REMOVE_OBJECT, parcel, &parcel, 0))
+        LOGA("Couldn't transact with service host");
 }
 
 template<typename T>

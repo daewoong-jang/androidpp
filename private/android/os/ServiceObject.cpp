@@ -57,7 +57,7 @@ ServiceObject::~ServiceObject()
 {
     LOGD("ServiceObject %d is being removed", m_objectUid);
 
-    m_channel.deref(m_objectUid);
+    m_channel.remove(m_objectUid);
     s_registry->erase(m_objectUid);
 }
 
@@ -71,6 +71,9 @@ std::shared_ptr<ServiceObject> ServiceObject::get(int32_t objectUid)
 
 std::shared_ptr<ServiceObject> ServiceObject::add(std::shared_ptr<ServiceObject> object, CreationTag creation)
 {
+    if (!object)
+        return nullptr;
+
     int32_t objectUid = object->objectUid();
     if (s_registry->count(objectUid) != 0)
         return object;
@@ -116,13 +119,8 @@ void ServiceObject::writeToParcel(Parcel& dest, int32_t flags) const
 {
     LOGD("ServiceObject %d is being serialized in process %lld", m_objectUid, System::getProcessId());
 
-    m_channel.ref(m_objectUid);
-    ParcelPrivate::getPrivate(dest).setFinalizer([this] {
-        m_channel.deref(m_objectUid);
-    });
+    ParcelPrivate::getPrivate(dest).hold(const_cast<ServiceObject*>(this));
 
-    // Write an extra uid for ServiceMessageClient<T>::import().
-    dest << m_objectUid;
     dest << m_objectUid;
 }
 
@@ -132,6 +130,14 @@ void ServiceObject::importToProcess(int64_t remotePid)
 
     assert(s_registry->count(m_objectUid) != 0);
     s_registry->at(m_objectUid).clients.insert(remotePid);
+}
+
+void ServiceObject::removedFromProcess(int64_t remotePid)
+{
+    LOGD("ServiceObject %d in process %lld was removed from process %lld", m_objectUid, System::getProcessId(), remotePid);
+
+    assert(s_registry->count(m_objectUid) != 0);
+    s_registry->at(m_objectUid).clients.erase(remotePid);
 }
 
 bool ServiceObject::update(Bundle& data)

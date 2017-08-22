@@ -44,10 +44,9 @@ public:
 private:
     // ServiceChannel
     void import(int32_t) override;
-    void ref(int32_t) override;
-    void deref(int32_t) override;
     bool update(int32_t, Bundle&) override;
     bool notify(int32_t, int64_t, int64_t) override;
+    void remove(int32_t) override;
 
     // ApplicationProcess:MessageClient
     void onTimer() override;
@@ -75,25 +74,19 @@ std::shared_ptr<T> ServiceMessageHost<T>::create(Parcel& data)
 template<typename T>
 std::shared_ptr<T> ServiceMessageHost<T>::import(Parcel& data)
 {
-    assert(false);
-    return nullptr;
+    int32_t objectUid;
+    data >> objectUid;
+    if (objectUid == 0)
+        return nullptr;
+
+    auto object = ServiceObject::get(objectUid);
+    assert(object);
+    return std::static_pointer_cast<T>(object);
 }
 
 template<typename T>
 void ServiceMessageHost<T>::import(int32_t)
 {
-}
-
-template<typename T>
-void ServiceMessageHost<T>::ref(int32_t objectUid)
-{
-    ServiceObject::get(objectUid)->ref();
-}
-
-template<typename T>
-void ServiceMessageHost<T>::deref(int32_t objectUid)
-{
-    ServiceObject::get(objectUid)->deref();
 }
 
 template<typename T>
@@ -125,6 +118,12 @@ bool ServiceMessageHost<T>::notify(int32_t objectUid, int64_t senderPid, int64_t
 }
 
 template<typename T>
+void ServiceMessageHost<T>::remove(int32_t objectUid)
+{
+    ServiceObject::get(objectUid)->deref();
+}
+
+template<typename T>
 void ServiceMessageHost<T>::onTimer()
 {
 }
@@ -139,7 +138,6 @@ bool ServiceMessageHost<T>::onTransaction(int32_t code, Parcel& data, Parcel* re
         return true;
     }
     case IMPORT_OBJECT:
-    case SECURE_OBJECT:
     case UPDATE_OBJECT:
     case REMOVE_OBJECT: {
         int32_t objectUid;
@@ -153,10 +151,7 @@ bool ServiceMessageHost<T>::onTransaction(int32_t code, Parcel& data, Parcel* re
             int64_t remotePid;
             data >> remotePid;
             object->importToProcess(remotePid);
-            return true;
-        }
-        case SECURE_OBJECT: {
-            ref(objectUid);
+            object->writeToParcel(*reply, 0);
             return true;
         }
         case UPDATE_OBJECT: {
@@ -172,7 +167,10 @@ bool ServiceMessageHost<T>::onTransaction(int32_t code, Parcel& data, Parcel* re
             return true;
         }
         case REMOVE_OBJECT: {
-            deref(objectUid);
+            int64_t remotePid;
+            data >> remotePid;
+            object->removedFromProcess(remotePid);
+            remove(objectUid);
             return true;
         }
         default:

@@ -39,10 +39,9 @@ public:
     virtual ~ServiceChannel() = default;
 
     virtual void import(int32_t) = 0;
-    virtual void ref(int32_t) = 0;
-    virtual void deref(int32_t) = 0;
     virtual bool update(int32_t, Bundle&) = 0;
     virtual bool notify(int32_t, int64_t, int64_t) = 0;
+    virtual void remove(int32_t) = 0;
 };
 
 } // namespace os

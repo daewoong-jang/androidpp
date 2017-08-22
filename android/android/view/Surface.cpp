@@ -94,7 +94,7 @@ public:
     std::shared_ptr<Parcelable> createFromParcel(Parcel& source) override
     {
         std::shared_ptr<Surface> result(new Surface(Surface::Uninitialized));
-        result->m_private = os::ServiceObject::import<SurfacePrivate>(source);
+        source >> result->m_private;
         return result;
     }
 
@@ -119,7 +119,7 @@ int32_t Surface::describeContents()
 void Surface::writeToParcel(Parcel& dest, int32_t flags) const
 {
     ParcelableCreator::writeToParcel(*this, dest);
-    m_private->writeToParcel(dest, flags);
+    dest << m_private;
 }
 
 } // namespace view

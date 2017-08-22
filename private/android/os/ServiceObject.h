@@ -36,6 +36,7 @@ template<typename T> class ServiceMessageClient;
 template<typename T> class ServiceMessageHost;
 
 class ServiceObject {
+    template<typename T> friend class ServiceMessageClient;
     template<typename T> friend class ServiceMessageHost;
 public:
     enum CreationTag { Create, Import };
@@ -63,6 +64,7 @@ public:
     virtual void readFromParcel(Parcel&);
     virtual void writeToParcel(Parcel&, int32_t flags) const;
     virtual void importToProcess(int64_t);
+    virtual void removedFromProcess(int64_t);
 
 protected:
     ServiceObject(ServiceChannel&);
@@ -81,6 +83,22 @@ private:
     ServiceChannel& m_channel;
     int32_t m_objectUid { 0 };
 };
+
+template<typename T, typename std::enable_if<std::is_base_of<ServiceObject, T>::value, T>::type* = 0>
+Parcel& operator<<(Parcel& parcel, std::passed_ptr<T> object)
+{
+    int32_t objectUid = object ? object->objectUid() : 0;
+    // Balanced by ServiceMessageClient<T>::import or ServiceMessageHost<T>::import.
+    parcel << objectUid;
+    return parcel;
+}
+
+template<typename T, typename std::enable_if<std::is_base_of<ServiceObject, T>::value, T>::type* = 0>
+Parcel& operator>>(Parcel& parcel, std::shared_ptr<T>& object)
+{
+    object = os::ServiceObject::import<T>(parcel);
+    return parcel;
+}
 
 } // namespace os
 } // namespace android
