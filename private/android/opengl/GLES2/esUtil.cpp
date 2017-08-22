@@ -20,9 +20,6 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
-#include <android/opengl/EGL.h>
-#include <EGL/eglext.h>
-#include <GLES2/gl2.h>
 #include "esUtil.h"
 #include "esUtil_win.h"
 

@@ -20,9 +20,7 @@
 ///
 //  Includes
 //
-#include <GLES2/gl2.h>
-#include <EGL/egl.h>
-#include <GLES2/gl2ext.h>
+#include <android/opengl.h>
 
 //#ifdef __cplusplus
 //

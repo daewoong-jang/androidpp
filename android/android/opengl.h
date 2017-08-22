@@ -25,6 +25,27 @@
 
 #pragma once
 
+#include <EGL/egl.h>
+
+#define EGL_NO_CONFIG (EGLConfig)(0)
+
+#if EGL_SOFT_LINKING
+#define eglGetDisplay eglGetDisplayPtr()
+#endif
+
+#include <EGL/eglext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+
+#ifndef EGL_EGLEXT_PROTOTYPES
+SOFT_LINK(libEGL, eglCreateImageKHR, EGLImageKHR, EGLAPIENTRY, (EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list), (dpy, ctx, target, buffer, attrib_list));
+SOFT_LINK(libEGL, eglDestroyImageKHR, EGLBoolean, EGLAPIENTRY, (EGLDisplay dpy, EGLImageKHR image), (dpy, image));
+#endif
+
+#ifndef GL_GLEXT_PROTOTYPES
+SOFT_LINK(libGLESv2, glEGLImageTargetTexture2DOES, void, GL_APIENTRY, (GLenum target, GLeglImageOES image), (target, image));
+#endif
+
 #include <java/lang.h>
 
 namespace javax {

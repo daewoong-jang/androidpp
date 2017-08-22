@@ -26,8 +26,6 @@
 #include "MediaRenderer.h"
 
 #include "MediaSurface.h"
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #include <android/opengl/Matrix.h>
 #include <android++/LogHelper.h>
 

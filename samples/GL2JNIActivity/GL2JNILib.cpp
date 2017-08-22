@@ -43,10 +43,8 @@
 
 // OpenGL ES 2.0 code
 
+#include <android/opengl.h>
 #include <android++/LogHelper.h>
-
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 
 #include <stdio.h>
 #include <stdlib.h>

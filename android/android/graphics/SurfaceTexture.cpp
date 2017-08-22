@@ -25,8 +25,6 @@
 
 #include "SurfaceTexture.h"
 
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
 #include <android/graphics/SurfaceTexturePrivate.h>
 #include <android/os/ParcelablePrivate.h>
 
