@@ -23,45 +23,48 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PlatformHandle.h"
+#pragma once
+
+#include "PlatformEventPrivate.h"
+#include <android++/Noncopyable.h>
 
 namespace android {
 namespace os {
 
-void PlatformHandle::platformClose(intptr_t handle)
-{
-    if (handle)
-        ::CloseHandle(reinterpret_cast<HANDLE>(handle));
-}
+class PlatformEvent final : public PlatformHandle {
+    friend class PlatformEventPrivate;
+    friend class WaitCallback;
+    NONCOPYABLE(PlatformEvent);
+public:
+    static const int64_t WAIT_INFINITE = -1;
 
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle)
-{
-    HANDLE processHandle = ::GetCurrentProcess();
+    enum class WaitMode { Synchronous, Asynchronous };
 
-    HANDLE duplicatedHandle;
-    if (!::DuplicateHandle(processHandle, reinterpret_cast<HANDLE>(handle), processHandle, &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS))
-        return 0;
+    PlatformEvent();
+    virtual ~PlatformEvent();
 
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
-}
+    void create();
 
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle, int64_t sourcePid)
-{
-    if (!sourcePid || !handle)
-        return 0;
+    void wait(WaitMode = WaitMode::Synchronous);
+    void waitFor(std::chrono::milliseconds, WaitMode = WaitMode::Synchronous);
+    void notify();
+    void cancel();
 
-    HANDLE sourceProcess = ::OpenProcess(PROCESS_DUP_HANDLE, FALSE, sourcePid);
-    if (!sourceProcess)
-        return 0;
+    void setWaitCallback(std::function<void (PlatformEvent*)>&&);
+    void setTimeCallback(std::function<void (PlatformEvent*)>&&);
 
-    HANDLE duplicatedHandle;
-    BOOL ok = ::DuplicateHandle(sourceProcess, reinterpret_cast<HANDLE>(handle), ::GetCurrentProcess(), &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    assert_wtf(ok);
+    virtual void readFromParcel(Parcel&);
+    virtual void writeToParcel(Parcel&, int32_t flags) const;
 
-    ::CloseHandle(sourceProcess);
+private:
+    void fired(bool isTimeout);
 
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
-}
+    intptr_t platformCreate();
+    void platformWait(int64_t, WaitMode);
+    void platformNotify();
+
+    std::shared_ptr<PlatformEventPrivate> m_private;
+};
 
 } // namespace os
 } // namespace android

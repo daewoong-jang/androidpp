@@ -23,45 +23,31 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 #include "PlatformHandle.h"
+#include <android++/Noncopyable.h>
 
 namespace android {
 namespace os {
 
-void PlatformHandle::platformClose(intptr_t handle)
-{
-    if (handle)
-        ::CloseHandle(reinterpret_cast<HANDLE>(handle));
-}
+class PlatformMutex final : public PlatformHandle {
+    NONCOPYABLE(PlatformMutex);
+public:
+    PlatformMutex();
+    virtual ~PlatformMutex();
 
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle)
-{
-    HANDLE processHandle = ::GetCurrentProcess();
+    void create();
 
-    HANDLE duplicatedHandle;
-    if (!::DuplicateHandle(processHandle, reinterpret_cast<HANDLE>(handle), processHandle, &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS))
-        return 0;
+    bool lock();
+    bool tryLock();
+    void unlock();
 
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
-}
-
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle, int64_t sourcePid)
-{
-    if (!sourcePid || !handle)
-        return 0;
-
-    HANDLE sourceProcess = ::OpenProcess(PROCESS_DUP_HANDLE, FALSE, sourcePid);
-    if (!sourceProcess)
-        return 0;
-
-    HANDLE duplicatedHandle;
-    BOOL ok = ::DuplicateHandle(sourceProcess, reinterpret_cast<HANDLE>(handle), ::GetCurrentProcess(), &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    assert_wtf(ok);
-
-    ::CloseHandle(sourceProcess);
-
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
-}
+private:
+    intptr_t platformCreate();
+    bool platformLock(int64_t);
+    void platformUnlock();
+};
 
 } // namespace os
 } // namespace android

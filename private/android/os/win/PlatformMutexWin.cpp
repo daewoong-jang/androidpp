@@ -23,44 +23,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PlatformHandle.h"
+#include "PlatformMutex.h"
+
+#include "PlatformEvent.h"
+#include <android++/LogHelper.h>
 
 namespace android {
 namespace os {
 
-void PlatformHandle::platformClose(intptr_t handle)
+intptr_t PlatformMutex::platformCreate()
 {
-    if (handle)
-        ::CloseHandle(reinterpret_cast<HANDLE>(handle));
+    return reinterpret_cast<intptr_t>(::CreateMutexA(NULL, FALSE, NULL));
 }
 
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle)
+bool PlatformMutex::platformLock(int64_t milliseconds)
 {
-    HANDLE processHandle = ::GetCurrentProcess();
+    bool lock = false;
 
-    HANDLE duplicatedHandle;
-    if (!::DuplicateHandle(processHandle, reinterpret_cast<HANDLE>(handle), processHandle, &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS))
-        return 0;
+    DWORD result = ::WaitForSingleObject(reinterpret_cast<HANDLE>(handle()), milliseconds == PlatformEvent::WAIT_INFINITE ? INFINITE : milliseconds);
+    switch (result) {
+    case WAIT_OBJECT_0:
+        lock = true;
+    case WAIT_TIMEOUT:
+    case WAIT_ABANDONED:
+        break;
+    case WAIT_FAILED:
+    default:
+        LOGE("Failed to lock mutex object");
+        break;
+    }
 
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
+    return lock;
 }
 
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle, int64_t sourcePid)
+void PlatformMutex::platformUnlock()
 {
-    if (!sourcePid || !handle)
-        return 0;
-
-    HANDLE sourceProcess = ::OpenProcess(PROCESS_DUP_HANDLE, FALSE, sourcePid);
-    if (!sourceProcess)
-        return 0;
-
-    HANDLE duplicatedHandle;
-    BOOL ok = ::DuplicateHandle(sourceProcess, reinterpret_cast<HANDLE>(handle), ::GetCurrentProcess(), &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    assert_wtf(ok);
-
-    ::CloseHandle(sourceProcess);
-
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
+    BOOL ok = ::ReleaseMutex(reinterpret_cast<HANDLE>(handle()));
+    if (!ok) {
+        LOGE("Failed to release mutex object");
+    }
 }
 
 } // namespace os

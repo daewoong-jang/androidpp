@@ -44,8 +44,13 @@ PlatformHandle::~PlatformHandle()
 
 void PlatformHandle::close()
 {
-    platformClose();
+    close(m_handle);
     m_handle = 0;
+}
+
+void PlatformHandle::close(intptr_t handle)
+{
+    platformClose(handle);
 }
 
 void PlatformHandle::setHandle(intptr_t handle)
@@ -62,12 +67,12 @@ void PlatformHandle::readFromParcel(Parcel& source)
     intptr_t handle;
     source >> handle;
 
-    m_handle = platformDuplicate(sourcePid, handle);
+    m_handle = platformDuplicate(handle, sourcePid);
 }
 
 void PlatformHandle::writeToParcel(Parcel& dest, int32_t flags) const
 {
-    intptr_t handle = platformDuplicate();
+    intptr_t handle = platformDuplicate(m_handle);
     dest << System::getProcessId();
     dest << handle;
 }

@@ -23,44 +23,52 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PlatformHandle.h"
+#include "PlatformMutex.h"
+
+#include "PlatformEvent.h"
+#include <android++/LogHelper.h>
 
 namespace android {
 namespace os {
 
-void PlatformHandle::platformClose(intptr_t handle)
+PlatformMutex::PlatformMutex()
 {
-    if (handle)
-        ::CloseHandle(reinterpret_cast<HANDLE>(handle));
 }
 
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle)
+PlatformMutex::~PlatformMutex()
 {
-    HANDLE processHandle = ::GetCurrentProcess();
-
-    HANDLE duplicatedHandle;
-    if (!::DuplicateHandle(processHandle, reinterpret_cast<HANDLE>(handle), processHandle, &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS))
-        return 0;
-
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
 }
 
-intptr_t PlatformHandle::platformDuplicate(intptr_t handle, int64_t sourcePid)
+void PlatformMutex::create()
 {
-    if (!sourcePid || !handle)
-        return 0;
+    if (handle())
+        return;
 
-    HANDLE sourceProcess = ::OpenProcess(PROCESS_DUP_HANDLE, FALSE, sourcePid);
-    if (!sourceProcess)
-        return 0;
+    setHandle(platformCreate());
+}
 
-    HANDLE duplicatedHandle;
-    BOOL ok = ::DuplicateHandle(sourceProcess, reinterpret_cast<HANDLE>(handle), ::GetCurrentProcess(), &duplicatedHandle, 0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
-    assert_wtf(ok);
+bool PlatformMutex::lock()
+{
+    if (!handle())
+        return false;
 
-    ::CloseHandle(sourceProcess);
+    return platformLock(PlatformEvent::WAIT_INFINITE);
+}
 
-    return reinterpret_cast<intptr_t>(duplicatedHandle);
+bool PlatformMutex::tryLock()
+{
+    if (!handle())
+        return false;
+
+    return platformLock(0);
+}
+
+void PlatformMutex::unlock()
+{
+    if (!handle())
+        return;
+
+    platformUnlock();
 }
 
 } // namespace os

@@ -38,6 +38,7 @@ public:
 
     intptr_t handle() const { return m_handle; }
     void close();
+    static void close(intptr_t);
 
     virtual void readFromParcel(Parcel&);
     virtual void writeToParcel(Parcel&, int32_t flags) const;
@@ -48,9 +49,9 @@ protected:
     void setHandle(intptr_t);
 
 private:
-    void platformClose();
-    intptr_t platformDuplicate() const;
-    intptr_t platformDuplicate(int64_t, intptr_t);
+    static void platformClose(intptr_t);
+    static intptr_t platformDuplicate(intptr_t);
+    static intptr_t platformDuplicate(intptr_t, int64_t);
 
     intptr_t m_handle { 0 };
 };

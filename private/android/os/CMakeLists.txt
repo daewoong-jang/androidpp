@@ -7,7 +7,9 @@ set(OS_SOURCES
     MessageTarget.cpp
     ParcelPrivate.cpp
     ParcelablePrivate.cpp
+    PlatformEvent.cpp
     PlatformHandle.cpp
+    PlatformMutex.cpp
     ServiceObject.cpp
 )
 
@@ -20,8 +22,11 @@ set(OS_HEADERS
     MessageTarget.h
     ParcelPrivate.h
     ParcelablePrivate.h
+    PlatformEvent.h
+    PlatformEventPrivate.h
     PlatformFileDescriptor.h
     PlatformHandle.h
+    PlatformMutex.h
     ServiceChannel.h
     ServiceMessageClient.h
     ServiceMessageHost.h
@@ -34,6 +39,8 @@ if (WIN32)
         win/BinderProviderWin.cpp
         win/LooperWin.cpp
         win/MemoryFilePrivateWin.cpp
+        win/PlatformEventWin.cpp
+        win/PlatformMutexWin.cpp
         win/PlatformFileDescriptorWin.cpp
         win/PlatformHandleWin.cpp
     )
