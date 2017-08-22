@@ -25,20 +25,32 @@
 
 #include "ParcelPrivate.h"
 
+#include "PlatformHandle.h"
+#include "ServiceObject.h"
 #include <android++/LogHelper.h>
+
+using namespace java::io;
 
 namespace android {
 namespace os {
 
 ParcelPrivate::ParcelPrivate(Parcel& parcel)
-    : m_parcel(parcel)
+    : ByteReader(this)
+    , ByteWriter(this)
+    , m_parcel(parcel)
 {
 }
 
 ParcelPrivate::~ParcelPrivate()
 {
-    if (m_finalizer.target<void ()>())
-        m_finalizer();
+    if (m_sent)
+        return;
+
+    for (auto handle : m_handles)
+        PlatformHandle::close(handle);
+
+    for (auto object : m_serviceObjects)
+        object->deref();
 }
 
 void ParcelPrivate::initializeWithCopy(Parcel& parcel, int8_t* data, size_t length)
@@ -58,7 +70,7 @@ void ParcelPrivate::setPrivate(Parcel& parcel, std::unique_ptr<ParcelPrivate>&& 
     parcel.m_private = std::move(parcelPrivate);
 }
 
-int32_t ParcelPrivate::size()
+size_t ParcelPrivate::size() const
 {
     return m_buffer.size();
 }
@@ -70,39 +82,13 @@ int8_t* ParcelPrivate::data()
 
 void ParcelPrivate::reset()
 {
-    m_pointer = m_buffer.data();
+    ByteReader::reset();
+    ByteWriter::reset();
 }
 
-void ParcelPrivate::read(void* out, size_t length, size_t alignment)
+void ParcelPrivate::setSent()
 {
-    if (!move(length, alignment))
-        return;
-    
-    memcpy(out, m_pointer, length);
-    m_pointer += length;
-}
-
-void ParcelPrivate::write(const void* in, size_t length, size_t alignment)
-{
-    int8_t* buffer = grow(length, alignment);
-    memcpy(buffer, in, length);
-}
-
-int8_t* ParcelPrivate::readArray(size_t& length, size_t alignment)
-{
-    read(&length, sizeof(length), sizeof(length));
-    if (!move(length * alignment, alignment))
-        return nullptr;
-
-    int8_t* arrayPosition = m_pointer;
-    m_pointer += length * alignment;
-    return arrayPosition;
-}
-
-void ParcelPrivate::writeArray(const void* in, size_t length, size_t alignment)
-{
-    write(&length, sizeof(length), sizeof(length));
-    write(in, length * alignment, alignment);
+    m_sent = true;
 }
 
 void ParcelPrivate::setOrigin(std::passed_ptr<Binder> binder)
@@ -115,49 +101,20 @@ std::shared_ptr<Binder> ParcelPrivate::getOrigin()
     return m_origin;
 }
 
-void ParcelPrivate::setFinalizer(std::function<void ()>&& finalizer)
+void ParcelPrivate::hold(intptr_t handle)
 {
-    m_finalizer = std::move(finalizer);
+    m_handles.insert(handle);
 }
 
-static inline size_t alignLength(size_t length, size_t alignment)
+void ParcelPrivate::hold(ServiceObject* object)
 {
-    return ((length + alignment - 1) / alignment) * alignment;
+    object->ref();
+    m_serviceObjects.insert(object);
 }
 
-int8_t* ParcelPrivate::grow(size_t length, size_t alignment)
+void ParcelPrivate::resize(size_t newSize)
 {
-    size_t alignedSize = alignLength(m_buffer.size(), alignment);
-    m_buffer.resize(alignedSize + length);
-    return m_buffer.data() + alignedSize;
-}
-
-static inline int8_t* alignPointer(int8_t* ptr, size_t alignment)
-{
-    uintptr_t alignmentMask = alignment - 1;
-    return reinterpret_cast<int8_t*>((reinterpret_cast<intptr_t>(ptr) + alignmentMask) & ~alignmentMask);
-}
-
-static inline bool isAvailable(const int8_t* alignedPosition, const int8_t* bufferEnd, size_t size)
-{
-    return bufferEnd >= alignedPosition && static_cast<size_t>(bufferEnd - alignedPosition) >= size;
-}
-
-int8_t* ParcelPrivate::move(size_t length, size_t alignment)
-{
-    int8_t* alignedPosition = alignPointer(m_pointer, alignment);
-    if (!isAvailable(alignedPosition, m_buffer.data() + m_buffer.size(), length)) {
-        throwException();
-        return nullptr;
-    }
-    
-    m_pointer = alignedPosition;
-    return m_pointer;
-}
-
-void ParcelPrivate::throwException()
-{
-    LOGA("IPC data corruption");
+    m_buffer.resize(newSize);
 }
 
 } // namespace os

@@ -34,6 +34,7 @@ namespace os {
 Parcel::Parcel()
     : m_private(std::make_shared<ParcelPrivate>(*this))
 {
+    m_private->reset();
 }
 
 Parcel::Parcel(const Parcel& other)

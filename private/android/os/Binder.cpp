@@ -138,7 +138,10 @@ bool LocalBinder::transact(int32_t code, Parcel& data, Parcel* reply, int32_t fl
 bool LocalBinder::transact(Binder* destination, int32_t code, Parcel& data, Parcel* reply, int32_t flags)
 {
     TemporaryChange<Parcel*> replyChange(m_reply, reply);
-    return m_provider->transact(destination, code, data, flags);
+    bool ok = m_provider->transact(destination, code, data, flags);
+    if (ok)
+        ParcelPrivate::getPrivate(data).setSent();
+    return ok;
 }
 
 void LocalBinder::onCreate()

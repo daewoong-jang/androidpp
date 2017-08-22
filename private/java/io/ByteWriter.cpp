@@ -23,52 +23,48 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "ByteWriter.h"
 
-#include <android/os/Parcel.h>
-#include <java/io/ByteReader.h>
-#include <java/io/ByteWriter.h>
-#include <unordered_set>
-#include <vector>
+namespace java {
+namespace io {
 
-namespace android {
-namespace os {
+ByteWriter::ByteWriter(ByteBufferProvider* buffer)
+    : m_buffer(buffer)
+{
+}
 
-class Binder;
-class ServiceObject;
+ByteWriter::~ByteWriter()
+{
+}
 
-class ParcelPrivate : public java::io::ByteReader, public java::io::ByteWriter
-    , public java::io::ByteBufferProvider {
-public:
-    ParcelPrivate(Parcel&);
-    ~ParcelPrivate();
-    static void initializeWithCopy(Parcel&, int8_t* data, size_t length);
+void ByteWriter::reset()
+{
+    m_pointer = m_buffer->data();
+}
 
-    static ParcelPrivate& getPrivate(Parcel&);
-    static void setPrivate(Parcel&, std::unique_ptr<ParcelPrivate>&&);
+void ByteWriter::write(const void* in, size_t length, size_t alignment)
+{
+    int8_t* buffer = grow(length, alignment);
+    memcpy(buffer, in, length);
+}
 
-    size_t size() const override;
-    int8_t* data() override;
+void ByteWriter::writeArray(const void* in, size_t length, size_t alignment)
+{
+    write(&length, sizeof(length), sizeof(length));
+    write(in, length * alignment, alignment);
+}
 
-    void reset();
-    void setSent();
+static inline size_t alignLength(size_t length, size_t alignment)
+{
+    return ((length + alignment - 1) / alignment) * alignment;
+}
 
-    void setOrigin(std::passed_ptr<Binder> binder);
-    std::shared_ptr<Binder> getOrigin();
+int8_t* ByteWriter::grow(size_t length, size_t alignment)
+{
+    size_t alignedSize = alignLength(m_buffer->size(), alignment);
+    m_buffer->resize(alignedSize + length);
+    return m_buffer->data() + alignedSize;
+}
 
-    void hold(intptr_t);
-    void hold(ServiceObject*);
-
-private:
-    void resize(size_t) override;
-
-    Parcel& m_parcel;
-    bool m_sent { false };
-    std::vector<int8_t> m_buffer;
-    std::shared_ptr<Binder> m_origin;
-    std::unordered_set<intptr_t> m_handles;
-    std::unordered_set<ServiceObject*> m_serviceObjects;
-};
-
-} // namespace os
-} // namespace android
+} // namespace io
+} // namespace java

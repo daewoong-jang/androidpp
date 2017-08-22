@@ -9,3 +9,5 @@ add_subdirectory(android/view)
 add_subdirectory(android/widget)
 
 add_subdirectory(android++)
+
+add_subdirectory(java/io)

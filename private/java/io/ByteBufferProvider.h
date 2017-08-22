@@ -25,50 +25,19 @@
 
 #pragma once
 
-#include <android/os/Parcel.h>
-#include <java/io/ByteReader.h>
-#include <java/io/ByteWriter.h>
-#include <unordered_set>
-#include <vector>
+#include <java/lang.h>
 
-namespace android {
-namespace os {
+namespace java {
+namespace io {
 
-class Binder;
-class ServiceObject;
-
-class ParcelPrivate : public java::io::ByteReader, public java::io::ByteWriter
-    , public java::io::ByteBufferProvider {
+class ByteBufferProvider {
 public:
-    ParcelPrivate(Parcel&);
-    ~ParcelPrivate();
-    static void initializeWithCopy(Parcel&, int8_t* data, size_t length);
+    virtual ~ByteBufferProvider() = default;
 
-    static ParcelPrivate& getPrivate(Parcel&);
-    static void setPrivate(Parcel&, std::unique_ptr<ParcelPrivate>&&);
-
-    size_t size() const override;
-    int8_t* data() override;
-
-    void reset();
-    void setSent();
-
-    void setOrigin(std::passed_ptr<Binder> binder);
-    std::shared_ptr<Binder> getOrigin();
-
-    void hold(intptr_t);
-    void hold(ServiceObject*);
-
-private:
-    void resize(size_t) override;
-
-    Parcel& m_parcel;
-    bool m_sent { false };
-    std::vector<int8_t> m_buffer;
-    std::shared_ptr<Binder> m_origin;
-    std::unordered_set<intptr_t> m_handles;
-    std::unordered_set<ServiceObject*> m_serviceObjects;
+    virtual size_t size() const = 0;
+    virtual void resize(size_t) = 0;
+    virtual int8_t* data() = 0;
 };
 
-} // namespace os
-} // namespace android
+} // namespace io
+} // namespace java

@@ -49,6 +49,7 @@ if (NOT ANDROID)
         $<TARGET_OBJECTS:android.view>
         $<TARGET_OBJECTS:android.view.inputmethod>
         $<TARGET_OBJECTS:android.widget>
+        $<TARGET_OBJECTS:android++.c++>
         $<TARGET_OBJECTS:java.lang>
         $<TARGET_OBJECTS:private.android.app>
         $<TARGET_OBJECTS:private.android.content>
@@ -60,7 +61,7 @@ if (NOT ANDROID)
         $<TARGET_OBJECTS:private.android.view>
         $<TARGET_OBJECTS:private.android.view.inputmethod>
         $<TARGET_OBJECTS:private.android.widget>
-        $<TARGET_OBJECTS:android++.c++>
+        $<TARGET_OBJECTS:private.java.io>
     )
 
     target_link_libraries(android++ ${ANDROID_LIB_DEPS})

@@ -175,7 +175,7 @@ void ApplicationLauncher::onTimer()
         case APPLICATION_STARTED:
             break;
         case NO_ACTION:
-            return;
+            continue;
         default:
             LOGA("ApplicationLauncher: False state %d for application", application->state);
             break;
