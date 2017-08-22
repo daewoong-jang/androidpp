@@ -1,4 +1,8 @@
 set(OPENGL_SOURCES
+    GLExtensions.cpp
+    GLTexture.cpp
+    GLTextureHandle.cpp
+
     GLES2/esShader.cpp
     GLES2/esShapes.cpp
     GLES2/esTransform.cpp
@@ -6,6 +10,10 @@ set(OPENGL_SOURCES
 )
 
 set(OPENGL_HEADERS
+    GLExtensions.h
+    GLTexture.h
+    GLTextureHandle.h
+
     GLES2/esUtil.h
 )
 
